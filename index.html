@@ -462,6 +462,14 @@
     background:var(--accent); color:#fff; border:none; padding:15px; border-radius:var(--radius); cursor:pointer;
   }
 
+  .timer-flash{
+    position:fixed; inset:0; background:var(--accent); opacity:0; pointer-events:none; z-index:150;
+  }
+  .timer-flash.pulse{ animation: timerFlashPulse .55s ease-in-out 3; }
+  @keyframes timerFlashPulse{
+    0%,100%{ opacity:0; }
+    50%{ opacity:.4; }
+  }
   .toast{
     position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
     background:var(--surface-3); color:var(--text); border:1px solid var(--border-strong); padding:11px 18px; border-radius:999px;
@@ -481,7 +489,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getDatabase, ref, get, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDt7a6P4_yBJ2ScGO752kDDHq5UR0HGQPc",
@@ -504,6 +512,10 @@
     async set(path, value){
       await set(ref(db, path), value);
       return true;
+    },
+    async transact(path, updateFn){
+      const result = await runTransaction(ref(db, path), (current) => updateFn(current));
+      return result.committed;
     }
   };
   window.dispatchEvent(new Event('fbready'));
@@ -645,6 +657,7 @@
   </button>
 </nav>
 
+<div class="timer-flash" id="timerFlash"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1319,6 +1332,34 @@ async function storageSet(key, value, shared){
   return false;
 }
 
+async function updateSharedData(mutatorFn){
+  if(!window.__fb){
+    mutatorFn(sharedData);
+    return await storageSet('trainingslog_daten', sharedData, true);
+  }
+  try{
+    const ready = await waitForFirebase();
+    if(!ready){ showFirebaseLoadError(); mutatorFn(sharedData); return false; }
+    let finalData = null;
+    const committed = await window.__fb.transact('trainingslog_daten', raw => {
+      let current;
+      try{ current = (typeof raw === 'string') ? JSON.parse(raw) : null; }catch(e){ current = null; }
+      if(!current || !current.programs || !current.programs.length){
+        current = { programs:[defaultProgram(), homeProgram(), maximalkraftProgram()], verlauf:[], gewichte:{}, nutzerListe:['Daniel'] };
+      }
+      if(!current.nutzerListe) current.nutzerListe = ['Daniel'];
+      mutatorFn(current);
+      finalData = current;
+      return JSON.stringify(current);
+    });
+    if(committed && finalData){ sharedData = finalData; return true; }
+    return false;
+  }catch(e){
+    console.error('Transaktion fehlgeschlagen', e);
+    return false;
+  }
+}
+
 function ensureFlushTimer(){
   if(flushTimer) return;
   flushTimer = setInterval(async ()=>{
@@ -1341,11 +1382,17 @@ function ensureFlushTimer(){
 let audioCtx = null;
 let keepAliveOsc = null, keepAliveGain = null;
 async function getAudioCtx(){
-  if(!audioCtx || audioCtx.state === 'closed'){
+  const wasDead = !audioCtx || audioCtx.state === 'closed';
+  if(wasDead){
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
   if(audioCtx.state === 'suspended'){
     try{ await audioCtx.resume(); }catch(e){}
+  }
+  // If the context had to be rebuilt while a rest timer is still running, the old
+  // keep-alive tone died with it — restart it under the fresh context.
+  if(wasDead && document.getElementById('timerBar').classList.contains('show')){
+    startAudioKeepAlive();
   }
   return audioCtx;
 }
@@ -1355,6 +1402,7 @@ document.addEventListener('pointerdown', ()=>{ getAudioCtx(); }, {passive:true})
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState === 'visible') getAudioCtx();
 });
+window.addEventListener('focus', ()=>{ getAudioCtx(); });
 async function startAudioKeepAlive(){
   try{
     const ctx = await getAudioCtx();
@@ -1477,14 +1525,11 @@ document.querySelectorAll('.nav-item').forEach(b=>{
 /* ============ Init ============ */
 async function init(){
   currentUser = await storageGet('aktueller_nutzer', false);
-  const data = await storageGet('trainingslog_daten', true);
-  if(data && data.programs && data.programs.length){ sharedData = data; }
-  else{ sharedData = { programs:[defaultProgram(), homeProgram(), maximalkraftProgram()], verlauf:[], gewichte:{}, nutzerListe:['Daniel'] }; await storageSet('trainingslog_daten', sharedData, true); }
-  if(!sharedData.nutzerListe) sharedData.nutzerListe = ['Daniel'];
-  let migrated = false;
-  if(!sharedData.programs.find(p=>p.id==='home_bodyweight')){ sharedData.programs.push(homeProgram()); migrated = true; }
-  if(!sharedData.programs.find(p=>p.id==='maximalkraft')){ sharedData.programs.push(maximalkraftProgram()); migrated = true; }
-  if(migrated) await storageSet('trainingslog_daten', sharedData, true);
+  await updateSharedData(current => {
+    if(!current.nutzerListe) current.nutzerListe = ['Daniel'];
+    if(!current.programs.find(p=>p.id==='home_bodyweight')) current.programs.push(homeProgram());
+    if(!current.programs.find(p=>p.id==='maximalkraft')) current.programs.push(maximalkraftProgram());
+  });
 
   const progress = await storageGet('laufendes_training', false);
   if(progress) workoutState = progress;
@@ -1523,8 +1568,9 @@ function showGate(){
     localStorage.setItem('app_sprache', appLang);
     await storageSet('aktueller_nutzer', val, false);
     if(!sharedData.nutzerListe.includes(val)){
-      sharedData.nutzerListe.push(val);
-      await storageSet('trainingslog_daten', sharedData, true);
+      await updateSharedData(current => {
+        if(!current.nutzerListe.includes(val)) current.nutzerListe.push(val);
+      });
     }
     document.getElementById('homeGreeting').textContent = `Hey ${currentUser}`;
     gate.style.display = 'none';
@@ -1626,8 +1672,10 @@ function renderHome(){
     btn.addEventListener('click', async (e)=>{
       e.stopPropagation();
       if(!confirm(t('program_delete_confirm'))) return;
-      sharedData.programs = sharedData.programs.filter(p=>p.id !== btn.dataset.delprogram);
-      await storageSet('trainingslog_daten', sharedData, true);
+      const delId = btn.dataset.delprogram;
+      await updateSharedData(current => {
+        current.programs = current.programs.filter(p=>p.id !== delId);
+      });
       renderHome();
     });
   });
@@ -1720,6 +1768,8 @@ function openProgram(programId){
   const program = localizeProgram(sharedData.programs.find(p=>p.id===programId));
   currentDayId = program.days[0].id;
   document.getElementById('workoutProgramName').textContent = program.name;
+  document.getElementById('finishBar').style.display = 'block';
+  document.getElementById('timerBar').classList.remove('show');
   buildTabs();
   renderWorkout();
   showScreen('screenWorkout');
@@ -1807,7 +1857,7 @@ function renderGroup(label, exercises, isMain){
         <div class="weight-wrap"><input class="weight-input" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*" placeholder="${t('weight_placeholder')}" value="${s.weight||''}" data-ex="${ex.id}" data-set="${i}"></div>
         <span class="set-x">×</span>
         <input class="reps-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="${ex.target}" value="${s.reps||''}" data-ex="${ex.id}" data-set="${i}">
-        <div class="set-check ${s.done?'done':''}" data-ex="${ex.id}" data-set="${i}">✓</div>
+        <div class="set-check ${s.done?'done':''}" data-ex="${ex.id}" data-set="${i}" data-rest="${ex.rest || (isMain?REST_MAIN:REST_ISO)}" data-name="${ex.name}">✓</div>
       </div>`;
     });
     html += `</div>
@@ -1843,6 +1893,9 @@ function attachExerciseHandlers(){
       const s = stateArr[i];
       s.done = !s.done;
       chk.classList.toggle('done', s.done);
+      if(s.done && i < stateArr.length - 1){
+        startTimer(+chk.dataset.rest, chk.dataset.name);
+      }
       const dayState = workoutState[currentProgramId][currentDayId];
       if(s.done && !dayState.__meta) dayState.__meta = { startTime: Date.now() };
 
@@ -1950,6 +2003,7 @@ function startTimer(seconds, label){
   timerRemaining = seconds;
   document.getElementById('timerContext').textContent = label;
   document.getElementById('timerBar').classList.add('show');
+  document.getElementById('finishBar').style.display = 'none';
   startAudioKeepAlive();
   updateTimerDisplay();
   timerInterval = setInterval(tickTimer, 1000);
@@ -1958,9 +2012,16 @@ function tickTimer(){
   timerRemaining = Math.max(0, Math.round((timerEndAt - Date.now()) / 1000));
   if(timerRemaining <= 0){
     clearInterval(timerInterval); updateTimerDisplay();
-    buzzer(); setTimeout(hideTimer, 900); return;
+    buzzer(); triggerTimerFlash(); setTimeout(hideTimer, 2000); return;
   }
   updateTimerDisplay();
+}
+function triggerTimerFlash(){
+  const el = document.getElementById('timerFlash');
+  el.classList.remove('pulse');
+  void el.offsetWidth; // restart animation if triggered again quickly
+  el.classList.add('pulse');
+  setTimeout(()=>el.classList.remove('pulse'), 2000);
 }
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState === 'visible' && timerEndAt && document.getElementById('timerBar').classList.contains('show')){
@@ -1972,7 +2033,11 @@ function updateTimerDisplay(){
   document.getElementById('timerClock').textContent = `${m}:${s.toString().padStart(2,'0')}`;
   document.getElementById('timerFill').style.width = Math.max(0,(timerRemaining/timerTotal)*100) + '%';
 }
-function hideTimer(){ document.getElementById('timerBar').classList.remove('show'); clearInterval(timerInterval); timerEndAt = null; stopAudioKeepAlive(); }
+function hideTimer(){
+  document.getElementById('timerBar').classList.remove('show');
+  document.getElementById('finishBar').style.display = 'block';
+  clearInterval(timerInterval); timerEndAt = null; stopAudioKeepAlive();
+}
 document.getElementById('timerPlus').onclick = ()=>{ timerEndAt += 15000; timerRemaining += 15; timerTotal = Math.max(timerTotal, timerRemaining); updateTimerDisplay(); };
 document.getElementById('timerMinus').onclick = ()=>{ timerEndAt = Math.max(Date.now(), timerEndAt - 15000); timerRemaining = Math.max(0, timerRemaining-15); updateTimerDisplay(); };
 document.getElementById('timerSkip').onclick = hideTimer;
@@ -1998,16 +2063,6 @@ document.getElementById('finishBtn').addEventListener('click', ()=>{
     doneCount, totalCount, durationMin, exercises: exList
   };
 
-  const weightUpdates = {};
-  exList.forEach(e=>{
-    const weights = e.sets.map(s=>toNum(s.weight)).filter(w=>!isNaN(w));
-    if(weights.length){
-      const maxW = Math.max(...weights);
-      const prevBest = (sharedData.gewichte[currentUser] || {})[e.id] || 0;
-      if(maxW > prevBest) weightUpdates[e.id] = maxW;
-    }
-  });
-
   const pendingProgramId = currentProgramId, pendingDayId = currentDayId;
   let undone = false;
 
@@ -2015,13 +2070,20 @@ document.getElementById('finishBtn').addEventListener('click', ()=>{
     undone = true;
   }, async ()=>{
     if(undone) return;
-    sharedData.verlauf = sharedData.verlauf || [];
-    sharedData.verlauf.unshift(entry);
-    sharedData.verlauf = sharedData.verlauf.slice(0, 500);
-    sharedData.gewichte[currentUser] = sharedData.gewichte[currentUser] || {};
-    Object.entries(weightUpdates).forEach(([id, val])=>{ sharedData.gewichte[currentUser][id] = val; });
-
-    const ok = await storageSet('trainingslog_daten', sharedData, true);
+    const ok = await updateSharedData(current => {
+      current.verlauf = current.verlauf || [];
+      current.verlauf.unshift(entry);
+      current.verlauf = current.verlauf.slice(0, 500);
+      current.gewichte[currentUser] = current.gewichte[currentUser] || {};
+      entry.exercises.forEach(e=>{
+        const weights = e.sets.map(s=>toNum(s.weight)).filter(w=>!isNaN(w));
+        if(weights.length){
+          const maxW = Math.max(...weights);
+          const prevBest = current.gewichte[currentUser][e.id] || 0;
+          if(maxW > prevBest) current.gewichte[currentUser][e.id] = maxW;
+        }
+      });
+    });
     if(workoutState[pendingProgramId]) workoutState[pendingProgramId][pendingDayId] = {};
     await storageSet('laufendes_training', workoutState, false);
 
@@ -2283,8 +2345,9 @@ async function deleteHistoryEntry(entryId){
   const entry = sharedData.verlauf.find(e=>e.id == entryId);
   if(!entry || entry.user !== currentUser) return;
   if(!confirm(t('history_delete_confirm'))) return;
-  sharedData.verlauf = sharedData.verlauf.filter(e=>e.id != entryId);
-  await storageSet('trainingslog_daten', sharedData, true);
+  await updateSharedData(current => {
+    current.verlauf = current.verlauf.filter(e=>e.id != entryId);
+  });
   renderHistory();
   showToast(t('history_deleted_toast'));
 }
@@ -2346,9 +2409,10 @@ document.getElementById('historyEditBack').onclick = ()=>{ renderHistory(); show
 document.getElementById('historyEditSave').addEventListener('click', async ()=>{
   if(!editingEntryDraft || editingEntryDraft.user !== currentUser) return;
   editingEntryDraft.doneCount = editingEntryDraft.exercises.reduce((n,e)=>n + e.sets.filter(s=>s.done).length, 0);
-  const idx = sharedData.verlauf.findIndex(e=>e.id == editingEntryId);
-  if(idx > -1) sharedData.verlauf[idx] = editingEntryDraft;
-  const ok = await storageSet('trainingslog_daten', sharedData, true);
+  const ok = await updateSharedData(current => {
+    const idx = current.verlauf.findIndex(e=>e.id == editingEntryId);
+    if(idx > -1) current.verlauf[idx] = editingEntryDraft;
+  });
   showToast(ok ? t('history_updated_toast') : t('save_fail_toast'));
   renderHistory();
   showScreen('screenHistory');
@@ -2474,21 +2538,17 @@ document.getElementById('builderSave').addEventListener('click', async ()=>{
   const hasExercise = builderState.days.some(d => (d.main.length + d.iso.length) > 0);
   if(!hasExercise){ showToast(t('builder_no_exercise_toast')); return; }
   const days = builderState.days.map(d=>({...d, title: d.title || d.label}));
-  if(builderState.editingId){
-    const idx = sharedData.programs.findIndex(p=>p.id===builderState.editingId);
-    if(idx > -1){
-      sharedData.programs[idx] = {
-        ...sharedData.programs[idx],
-        name, subtitle: document.getElementById('builderSubtitle').value.trim(), days
-      };
+  const subtitle = document.getElementById('builderSubtitle').value.trim();
+  await updateSharedData(current => {
+    if(builderState.editingId){
+      const idx = current.programs.findIndex(p=>p.id===builderState.editingId);
+      if(idx > -1){
+        current.programs[idx] = { ...current.programs[idx], name, subtitle, days };
+      }
+    } else {
+      current.programs.push({ id: uid('prog'), name, subtitle, builtIn:false, days });
     }
-  } else {
-    sharedData.programs.push({
-      id: uid('prog'), name, subtitle: document.getElementById('builderSubtitle').value.trim(),
-      builtIn:false, days
-    });
-  }
-  await storageSet('trainingslog_daten', sharedData, true);
+  });
   showToast(t('builder_save_toast'));
   renderHome();
   showScreen('screenHome');
