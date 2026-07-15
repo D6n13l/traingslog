@@ -2246,8 +2246,10 @@ function showToast(msg){
 
 /* ============ History ============ */
 function getKnownUsers(){
-  if(sharedData.nutzerListe && sharedData.nutzerListe.length) return sharedData.nutzerListe;
-  return Array.from(new Set((sharedData.verlauf||[]).map(e=>e.user)));
+  const fromList = sharedData.nutzerListe || [];
+  const fromHistory = (sharedData.verlauf || []).map(e=>e.user);
+  const fromWeights = Object.keys(sharedData.gewichte || {});
+  return Array.from(new Set([...fromList, ...fromHistory, ...fromWeights].filter(Boolean)));
 }
 
 function buildExerciseIndex(){
