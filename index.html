@@ -1595,8 +1595,14 @@ async function init(){
   currentUser = await storageGet('aktueller_nutzer', false);
   await updateSharedData(current => {
     if(!current.nutzerListe) current.nutzerListe = ['Daniel'];
+    if(!Array.isArray(current.programs)) current.programs = [];
     BUILTIN_PROGRAMS.forEach(({id, factory})=>{
-      if(!current.programs.find(p=>p.id===id)) current.programs.push(factory());
+      const existing = current.programs.find(p=>p.id===id);
+      const isBroken = existing && (!Array.isArray(existing.days) || !existing.days.length);
+      if(!existing || isBroken){
+        current.programs = current.programs.filter(p=>p.id !== id);
+        current.programs.push(factory());
+      }
     });
   });
 
