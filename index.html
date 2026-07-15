@@ -1333,13 +1333,13 @@ async function storageSet(key, value, shared){
 }
 
 async function updateSharedData(mutatorFn){
-  if(!window.__fb){
+  const ready = await waitForFirebase();
+  if(!ready){
+    showFirebaseLoadError();
     mutatorFn(sharedData);
     return await storageSet('trainingslog_daten', sharedData, true);
   }
   try{
-    const ready = await waitForFirebase();
-    if(!ready){ showFirebaseLoadError(); mutatorFn(sharedData); return false; }
     let finalData = null;
     const committed = await window.__fb.transact('trainingslog_daten', raw => {
       let current;
