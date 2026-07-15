@@ -99,26 +99,39 @@
     font-size:14px; color:var(--text-2); margin:4px 2px 10px; line-height:1.4;
   }
   .home-list{padding:14px 16px 100px;}
+
   .week-card{
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     padding:16px; margin-bottom:18px;
   }
-  .week-card-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px;}
-  .week-card-label{font-size:12px; color:var(--text-2); font-weight:600; letter-spacing:.02em;}
-  .week-card-count{font-family:'Oswald',sans-serif; font-size:14px; font-weight:700; color:var(--accent);}
-  .week-track{height:9px; border-radius:999px; background:var(--surface-2); overflow:hidden; margin-bottom:12px;}
-  .week-fill{height:100%; background:var(--accent); border-radius:999px; transition:width .4s ease; position:relative; overflow:hidden;}
-  .week-fill.complete{background:var(--glow-green);}
-  .week-fill::after{
-    content:''; position:absolute; top:0; left:-60%; width:50%; height:100%;
-    background:linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent);
-    animation: weekShimmer 9s ease-in-out infinite;
+  .week-card-main{display:flex; align-items:center; gap:16px;}
+  .week-ring-wrap{position:relative; width:84px; height:84px; flex-shrink:0;}
+  .week-ring-wrap::before{
+    content:''; position:absolute; inset:-16px; border-radius:50%;
+    background:radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    filter:blur(13px); opacity:.3; z-index:0;
+    animation: ringGlowPulse 3.2s ease-in-out infinite;
   }
-  @keyframes weekShimmer{
-    0%{ left:-60%; }
-    16%{ left:130%; }
-    100%{ left:130%; }
+  .week-ring-wrap.complete::before{ background:radial-gradient(circle, var(--glow-green) 0%, transparent 70%); }
+  @keyframes ringGlowPulse{
+    0%,100%{ opacity:.22; transform:scale(.9); }
+    50%{ opacity:.5; transform:scale(1.08); }
   }
+  .week-ring, .week-ring-label{position:relative; z-index:1;}
+  .week-ring{width:100%; height:100%; transform:rotate(-90deg);}
+  .week-ring-track{fill:none; stroke:var(--surface-2); stroke-width:8;}
+  .week-ring-fill{
+    fill:none; stroke:var(--accent); stroke-width:8; stroke-linecap:round;
+    stroke-dasharray:264; stroke-dashoffset:264;
+    filter:drop-shadow(0 0 6px var(--accent)); transition:stroke .3s, filter .3s;
+  }
+  .week-ring-fill.complete{ stroke:var(--glow-green); filter:drop-shadow(0 0 6px var(--glow-green)); }
+  .week-ring-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'Oswald',sans-serif; font-weight:700; font-size:15px;
+  }
+  .week-card-info{flex:1; min-width:0;}
+  .week-card-label{font-size:12px; color:var(--text-2); font-weight:600; letter-spacing:.02em; margin-bottom:6px;}
   .week-volume{display:flex; align-items:baseline; gap:6px; margin-bottom:6px;}
   .week-volume-num{font-family:'Oswald',sans-serif; font-size:20px; font-weight:700;}
   .week-volume-label{font-size:12px; color:var(--text-2);}
@@ -1562,16 +1575,23 @@ function renderHome(){
     ? t('week_no_training')
     : `${t('week_last_prefix')} ${stats.daysSinceLast} ${stats.daysSinceLast === 1 ? t('week_last_one') : t('week_last_many')}`;
   html += `<div class="week-card">
-    <div class="week-card-top">
-      <span class="week-card-label">${t('week_progress')}</span>
-      <span class="week-card-count"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL} ${t('week_trainings')}</span>
+    <div class="week-card-main">
+      <div class="week-ring-wrap${pct >= 100 ? ' complete' : ''}">
+        <svg class="week-ring" viewBox="0 0 100 100">
+          <circle class="week-ring-track" cx="50" cy="50" r="42"/>
+          <circle class="week-ring-fill${pct >= 100 ? ' complete' : ''}" cx="50" cy="50" r="42" data-target-pct="${pct}"/>
+        </svg>
+        <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
+      </div>
+      <div class="week-card-info">
+        <div class="week-card-label">${t('week_progress')}</div>
+        <div class="week-volume">
+          <span class="week-volume-num count-target" data-target="${Math.round(stats.weekVolume)}">0</span>
+          <span class="week-volume-label">${t('week_volume_label')}</span>
+        </div>
+        <div class="week-secondary">${lastLabel} · ${stats.totalCount} ${t('week_total')}</div>
+      </div>
     </div>
-    <div class="week-track"><div class="week-fill${pct >= 100 ? ' complete' : ''}" style="width:0%" data-target-pct="${pct}"></div></div>
-    <div class="week-volume">
-      <span class="week-volume-num count-target" data-target="${Math.round(stats.weekVolume)}">0</span>
-      <span class="week-volume-label">${t('week_volume_label')}</span>
-    </div>
-    <div class="week-secondary">${lastLabel} · ${stats.totalCount} ${t('week_total')}</div>
   </div>`;
 
   html += `<div class="home-question">${t('home_question')}</div>`;
@@ -1634,8 +1654,9 @@ function animateWeekCard(){
   const numEls = Array.from(document.querySelectorAll('.count-target')).map(el=>({
     el, target: parseInt(el.dataset.target, 10) || 0
   }));
-  const fillEl = document.querySelector('.week-fill');
-  const targetPct = fillEl ? parseFloat(fillEl.dataset.targetPct) || 0 : 0;
+  const ringEl = document.querySelector('.week-ring-fill');
+  const targetPct = ringEl ? parseFloat(ringEl.dataset.targetPct) || 0 : 0;
+  const circumference = 2 * Math.PI * 42; // matches r=42 in the SVG
 
   function tick(now){
     const progress = Math.min(1, (now - start) / duration);
@@ -1643,7 +1664,10 @@ function animateWeekCard(){
     numEls.forEach(({el, target})=>{
       el.textContent = Math.round(target * eased).toLocaleString(LOCALE_MAP[appLang]);
     });
-    if(fillEl) fillEl.style.width = (targetPct * eased) + '%';
+    if(ringEl){
+      const offset = circumference - (circumference * (targetPct/100) * eased);
+      ringEl.style.strokeDashoffset = offset;
+    }
     if(progress < 1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
