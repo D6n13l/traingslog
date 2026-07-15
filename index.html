@@ -364,6 +364,19 @@
     width:100%; background:none; color:var(--text-2); border:none; padding:8px;
     font-size:13px; cursor:pointer; text-decoration:underline;
   }
+  .backups-card{max-width:360px; max-height:80vh; overflow-y:auto; text-align:left;}
+  .backups-list{margin:14px 0; display:flex; flex-direction:column; gap:8px; max-height:50vh; overflow-y:auto;}
+  .backup-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--surface-2); border-radius:var(--radius-sm); padding:10px 12px;
+  }
+  .backup-item-date{font-size:12.5px; color:var(--text);}
+  .backup-item-meta{font-size:10.5px; color:var(--text-3); margin-top:2px;}
+  .backup-restore-btn{
+    font-family:'Oswald',sans-serif; font-size:12px; font-weight:600; color:var(--accent);
+    background:var(--accent-soft); border:none; padding:7px 12px; border-radius:999px; cursor:pointer; flex-shrink:0;
+  }
+  .backups-empty{color:var(--text-3); font-size:13px; text-align:center; padding:20px 0;}
 
   /* ---------- History ---------- */
   .history-header{padding:calc(22px + var(--safe-t)) 20px 8px;}
@@ -546,6 +559,14 @@
     <div class="completion-stats" id="completionStats"></div>
     <button class="completion-primary" id="completionFinishBtn">Training abschließen</button>
     <button class="completion-secondary" id="completionContinueBtn">Weiter trainieren</button>
+  </div>
+</div>
+
+<div id="backupsScreen" class="completion-screen" style="display:none;">
+  <div class="completion-card backups-card">
+    <div class="completion-title" id="backupsTitle">Sicherungen</div>
+    <div class="backups-list" id="backupsList"></div>
+    <button class="completion-secondary" id="backupsCloseBtn">Schließen</button>
   </div>
 </div>
 
@@ -873,6 +894,7 @@ const UI_TEXT = {
     weight_placeholder:'kg', reps_placeholder:'Wdh.', pr_badge:'PR', edit_title:'Bearbeiten', delete_title:'Löschen',
     history_edit_save:'Änderungen speichern', section_main:'Hauptübungen', section_iso:'Isolationsübungen',
     firebase_reconnected_toast:'Wieder verbunden — Daten gespeichert ✓', timer_done:'Fertig',
+    backups_link:'Sicherungen anzeigen', backups_title:'Sicherungen', backups_empty:'Noch keine Sicherungen vorhanden.', backups_restore_btn:'Wiederherstellen', backups_restore_confirm:'Diesen Stand wiederherstellen? Der aktuelle Stand wird dadurch ersetzt.', backups_restored_toast:'Sicherung wiederhergestellt ✓', backups_close:'Schließen',
   },
   en: {
     gate_title:'Who\'s training?', gate_sub:'So history & weights are tracked correctly.',
@@ -911,6 +933,7 @@ const UI_TEXT = {
     weight_placeholder:'kg', reps_placeholder:'Reps', pr_badge:'PR', edit_title:'Edit', delete_title:'Delete',
     history_edit_save:'Save changes', section_main:'Main exercises', section_iso:'Isolation exercises',
     firebase_reconnected_toast:'Reconnected — data saved ✓', timer_done:'Done',
+    backups_link:'View backups', backups_title:'Backups', backups_empty:'No backups yet.', backups_restore_btn:'Restore', backups_restore_confirm:'Restore this snapshot? Your current data will be replaced.', backups_restored_toast:'Backup restored ✓', backups_close:'Close',
   },
   fr: {
     gate_title:'Qui s\'entraîne ?', gate_sub:'Pour que l\'historique et les poids soient bien attribués.',
@@ -949,6 +972,7 @@ const UI_TEXT = {
     weight_placeholder:'kg', reps_placeholder:'Rép.', pr_badge:'RP', edit_title:'Modifier', delete_title:'Supprimer',
     history_edit_save:'Enregistrer les modifications', section_main:'Exercices principaux', section_iso:'Exercices d\'isolation',
     firebase_reconnected_toast:'Reconnecté — données enregistrées ✓', timer_done:'Terminé',
+    backups_link:'Voir les sauvegardes', backups_title:'Sauvegardes', backups_empty:'Pas encore de sauvegarde.', backups_restore_btn:'Restaurer', backups_restore_confirm:'Restaurer cet état ? Les données actuelles seront remplacées.', backups_restored_toast:'Sauvegarde restaurée ✓', backups_close:'Fermer',
   },
   es: {
     gate_title:'¿Quién entrena?', gate_sub:'Para asignar bien el historial y los pesos.',
@@ -987,6 +1011,7 @@ const UI_TEXT = {
     weight_placeholder:'kg', reps_placeholder:'Reps', pr_badge:'RP', edit_title:'Editar', delete_title:'Eliminar',
     history_edit_save:'Guardar cambios', section_main:'Ejercicios principales', section_iso:'Ejercicios de aislamiento',
     firebase_reconnected_toast:'Reconectado — datos guardados ✓', timer_done:'Listo',
+    backups_link:'Ver copias de seguridad', backups_title:'Copias de seguridad', backups_empty:'Aún no hay copias de seguridad.', backups_restore_btn:'Restaurar', backups_restore_confirm:'¿Restaurar este estado? Los datos actuales serán reemplazados.', backups_restored_toast:'Copia restaurada ✓', backups_close:'Cerrar',
   },
 };
 function t(key){ return (UI_TEXT[appLang] && UI_TEXT[appLang][key]) || UI_TEXT.de[key] || key; }
@@ -1345,19 +1370,56 @@ async function updateSharedData(mutatorFn){
       let current;
       try{ current = (typeof raw === 'string') ? JSON.parse(raw) : null; }catch(e){ current = null; }
       if(!current || !current.programs || !current.programs.length){
-        current = { programs:[defaultProgram(), homeProgram(), maximalkraftProgram()], verlauf:[], gewichte:{}, nutzerListe:['Daniel'] };
+        current = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, nutzerListe:['Daniel'] };
       }
       if(!current.nutzerListe) current.nutzerListe = ['Daniel'];
       mutatorFn(current);
       finalData = current;
       return JSON.stringify(current);
     });
-    if(committed && finalData){ sharedData = finalData; return true; }
+    if(committed && finalData){ sharedData = finalData; saveBackupSnapshot(finalData); return true; }
     return false;
   }catch(e){
     console.error('Transaktion fehlgeschlagen', e);
     return false;
   }
+}
+
+const MAX_BACKUPS = 25;
+async function saveBackupSnapshot(data){
+  try{
+    if(!window.__fb) return;
+    const raw = await window.__fb.get('trainingslog_backups');
+    let backups = {};
+    try{ backups = raw ? JSON.parse(raw) : {}; }catch(e){ backups = {}; }
+    backups[Date.now()] = data;
+    const keys = Object.keys(backups).map(Number).sort((a,b)=>a-b);
+    while(keys.length > MAX_BACKUPS){ delete backups[keys.shift()]; }
+    await window.__fb.set('trainingslog_backups', JSON.stringify(backups));
+  }catch(e){ console.warn('Backup-Snapshot fehlgeschlagen', e); }
+}
+async function listBackups(){
+  try{
+    if(!window.__fb) return [];
+    const raw = await window.__fb.get('trainingslog_backups');
+    if(!raw) return [];
+    const backups = JSON.parse(raw);
+    return Object.keys(backups).map(Number).sort((a,b)=>b-a).map(ts=>({ ts, data: backups[ts] }));
+  }catch(e){ return []; }
+}
+async function restoreBackup(ts){
+  const raw = await window.__fb.get('trainingslog_backups');
+  if(!raw) return false;
+  const backups = JSON.parse(raw);
+  const snapshot = backups[ts];
+  if(!snapshot) return false;
+  const ok = await updateSharedData(current => {
+    current.programs = snapshot.programs;
+    current.verlauf = snapshot.verlauf;
+    current.gewichte = snapshot.gewichte;
+    current.nutzerListe = snapshot.nutzerListe;
+  });
+  return ok;
 }
 
 function ensureFlushTimer(){
@@ -1523,12 +1585,19 @@ document.querySelectorAll('.nav-item').forEach(b=>{
 });
 
 /* ============ Init ============ */
+const BUILTIN_PROGRAMS = [
+  { id: 'beine_4er', factory: defaultProgram },
+  { id: 'home_bodyweight', factory: homeProgram },
+  { id: 'maximalkraft', factory: maximalkraftProgram },
+];
+
 async function init(){
   currentUser = await storageGet('aktueller_nutzer', false);
   await updateSharedData(current => {
     if(!current.nutzerListe) current.nutzerListe = ['Daniel'];
-    if(!current.programs.find(p=>p.id==='home_bodyweight')) current.programs.push(homeProgram());
-    if(!current.programs.find(p=>p.id==='maximalkraft')) current.programs.push(maximalkraftProgram());
+    BUILTIN_PROGRAMS.forEach(({id, factory})=>{
+      if(!current.programs.find(p=>p.id===id)) current.programs.push(factory());
+    });
   });
 
   const progress = await storageGet('laufendes_training', false);
@@ -1659,6 +1728,7 @@ function renderHome(){
   html += `<button class="add-program-card" id="addProgramBtn">${t('add_program')}</button>`;
   html += `<button class="export-link" id="exportLink">${t('export_link')}</button>`;
   html += `<button class="reset-link" id="resetLink">${t('reset_link')}</button>`;
+  html += `<button class="reset-link" id="backupsLink">${t('backups_link')}</button>`;
   list.innerHTML = html;
   animateWeekCard();
 
@@ -1689,12 +1759,55 @@ function renderHome(){
   document.getElementById('exportLink').onclick = exportBackup;
   document.getElementById('resetLink').onclick = async ()=>{
     if(!confirm(t('reset_confirm'))) return;
-    sharedData = { programs:[defaultProgram(), homeProgram(), maximalkraftProgram()], verlauf:[], gewichte:{}, nutzerListe:['Daniel'] };
+    sharedData = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, nutzerListe:['Daniel'] };
     await storageSet('trainingslog_daten', sharedData, true);
     renderHome();
     showToast(t('reset_done_toast'));
   };
+  document.getElementById('backupsLink').onclick = showBackupsScreen;
 }
+
+async function showBackupsScreen(){
+  document.getElementById('backupsTitle').textContent = t('backups_title');
+  document.getElementById('backupsCloseBtn').textContent = t('backups_close');
+  const list = document.getElementById('backupsList');
+  list.innerHTML = `<div class="backups-empty">…</div>`;
+  document.getElementById('backupsScreen').style.display = 'flex';
+
+  const backups = await listBackups();
+  if(!backups.length){
+    list.innerHTML = `<div class="backups-empty">${t('backups_empty')}</div>`;
+    return;
+  }
+  list.innerHTML = backups.map(b=>{
+    const d = new Date(b.ts);
+    const dateStr = d.toLocaleDateString(LOCALE_MAP[appLang], {day:'2-digit', month:'2-digit', year:'2-digit'});
+    const timeStr = d.toLocaleTimeString(LOCALE_MAP[appLang], {hour:'2-digit', minute:'2-digit'});
+    const count = (b.data.verlauf || []).length;
+    return `<div class="backup-item">
+      <div>
+        <div class="backup-item-date">${dateStr} · ${timeStr}</div>
+        <div class="backup-item-meta">${count} ${t('week_trainings')}</div>
+      </div>
+      <button class="backup-restore-btn" data-restorets="${b.ts}">${t('backups_restore_btn')}</button>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-restorets]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      if(!confirm(t('backups_restore_confirm'))) return;
+      const ok = await restoreBackup(btn.dataset.restorets);
+      if(ok){
+        showToast(t('backups_restored_toast'));
+        document.getElementById('backupsScreen').style.display = 'none';
+        renderHome();
+      } else {
+        showToast(t('save_fail_toast'));
+      }
+    });
+  });
+}
+document.getElementById('backupsCloseBtn').onclick = ()=>{ document.getElementById('backupsScreen').style.display = 'none'; };
 
 function animateWeekCard(){
   const duration = 1800;
