@@ -75,7 +75,7 @@
     position:fixed; width:20px; height:20px; margin:-10px 0 0 -10px;
     border-radius:50%; border:2px solid var(--accent);
     pointer-events:none; z-index:250;
-    animation: homeWaveExpand 1.1s cubic-bezier(.2,.6,.3,1) forwards;
+    animation: homeWaveExpand 1.8s cubic-bezier(.2,.6,.3,1) forwards;
   }
   @keyframes homeWaveExpand{
     0%{ transform:scale(1); opacity:.9; border-width:3px; }
@@ -532,15 +532,24 @@
 <body>
 
 <svg width="0" height="0" style="position:absolute;">
-  <filter id="rippleFilter" x="-20%" y="-20%" width="140%" height="140%">
-    <feTurbulence type="fractalNoise" numOctaves="2" baseFrequency="0.004 0.006" seed="7" result="rippleNoise">
-      <animate id="rippleFreqAnim" attributeName="baseFrequency" values="0.004 0.006;0.01 0.016;0.03 0.045" keyTimes="0;0.3;1" dur="1.1s" begin="indefinite"/>
-    </feTurbulence>
-    <feDisplacementMap in="SourceGraphic" in2="rippleNoise" xChannelSelector="R" yChannelSelector="G">
-      <animate id="rippleAnim" attributeName="scale" values="0;24;0" keyTimes="0;0.3;1" dur="1.1s" begin="indefinite"/>
+  <defs>
+    <radialGradient id="waveGradient" cx="18%" cy="9%" r="8%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#000000"/>
+      <stop offset="82%" stop-color="#000000"/>
+      <stop offset="94%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#000000"/>
+      <animate id="waveRadiusAnim" attributeName="r" values="6%;90%" dur="1.8s" begin="indefinite" fill="freeze"/>
+    </radialGradient>
+    <rect id="waveGradientRect" x="0" y="0" width="100%" height="100%" fill="url(#waveGradient)"/>
+  </defs>
+  <filter id="rippleFilter" x="-20%" y="-20%" width="140%" height="140%" primitiveUnits="objectBoundingBox">
+    <feImage href="#waveGradientRect" x="0" y="0" width="1" height="1" result="waveMap" preserveAspectRatio="none"/>
+    <feDisplacementMap in="SourceGraphic" in2="waveMap" xChannelSelector="R" yChannelSelector="R">
+      <animate id="rippleAnim" attributeName="scale" values="0;13;13;0" keyTimes="0;0.1;0.75;1" dur="1.8s" begin="indefinite" fill="freeze"/>
     </feDisplacementMap>
   </filter>
 </svg>
+
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -937,7 +946,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-16-ripple3';
+const APP_BUILD = '2026-07-16-ripple4';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -1761,12 +1770,12 @@ function triggerHomeRipple(){
     document.body.appendChild(wave);
     wave.addEventListener('animationend', ()=>wave.remove());
 
-    // 3) content warp: scale AND turbulence frequency animate together, so the
-    // distortion feels like it travels outward with the wave instead of a single shake
+    // 3) content warp: an actual expanding-circle displacement map grows in sync
+    // with the visible wave, so the distortion genuinely travels outward as a ring
     try{
-      const freqAnim = document.getElementById('rippleFreqAnim');
+      const radiusAnim = document.getElementById('waveRadiusAnim');
       const scaleAnim = document.getElementById('rippleAnim');
-      if(freqAnim && freqAnim.beginElement) freqAnim.beginElement();
+      if(radiusAnim && radiusAnim.beginElement) radiusAnim.beginElement();
       if(scaleAnim && scaleAnim.beginElement) scaleAnim.beginElement();
     }catch(e){}
   }, RING_FILL_DURATION);
