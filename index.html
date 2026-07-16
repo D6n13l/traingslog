@@ -65,11 +65,21 @@
 
   .screen{display:none;}
   #screenHome{filter:url(#rippleFilter);}
-  .ring-flash{animation:ringFlashOnce .5s ease-out;}
+  .ring-flash{animation:ringFlashOnce .45s ease-out;}
   @keyframes ringFlashOnce{
     0%{ filter:brightness(1); }
-    25%{ filter:brightness(2.2); }
+    30%{ filter:brightness(3); }
     100%{ filter:brightness(1); }
+  }
+  .home-wave{
+    position:fixed; width:20px; height:20px; margin:-10px 0 0 -10px;
+    border-radius:50%; border:2px solid var(--accent);
+    pointer-events:none; z-index:250;
+    animation: homeWaveExpand 1.1s cubic-bezier(.2,.6,.3,1) forwards;
+  }
+  @keyframes homeWaveExpand{
+    0%{ transform:scale(1); opacity:.9; border-width:3px; }
+    100%{ transform:scale(48); opacity:0; border-width:.5px; }
   }
   .screen.active{display:block;}
 
@@ -523,9 +533,9 @@
 
 <svg width="0" height="0" style="position:absolute;">
   <filter id="rippleFilter" x="-20%" y="-20%" width="140%" height="140%">
-    <feTurbulence type="fractalNoise" numOctaves="2" baseFrequency="0.012 0.018" seed="7" result="rippleNoise"/>
+    <feTurbulence type="fractalNoise" numOctaves="2" baseFrequency="0.006 0.01" seed="7" result="rippleNoise"/>
     <feDisplacementMap in="SourceGraphic" in2="rippleNoise" xChannelSelector="R" yChannelSelector="G">
-      <animate id="rippleAnim" attributeName="scale" values="0;9;0" keyTimes="0;0.35;1" dur="1.2s" begin="indefinite"/>
+      <animate id="rippleAnim" attributeName="scale" values="0;24;0" keyTimes="0;0.3;1" dur="1.1s" begin="indefinite"/>
     </feDisplacementMap>
   </filter>
 </svg>
@@ -925,7 +935,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-16-ripple';
+const APP_BUILD = '2026-07-16-ripple2';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -1726,17 +1736,32 @@ async function buzzer(){
 
 /* ============ Screens ============ */
 function triggerHomeRipple(){
-  try{
-    const anim = document.getElementById('rippleAnim');
-    if(anim && anim.beginElement) anim.beginElement();
-  }catch(e){}
-  const ringWrap = document.querySelector('.week-ring-wrap');
-  if(ringWrap){
+  setTimeout(()=>{
+    const ringWrap = document.querySelector('.week-ring-wrap');
+    if(!ringWrap) return;
+
+    // 1) brief bright flash right as the fill completes
     ringWrap.classList.remove('ring-flash');
     void ringWrap.offsetWidth;
     ringWrap.classList.add('ring-flash');
-    setTimeout(()=>ringWrap.classList.remove('ring-flash'), 550);
-  }
+    setTimeout(()=>ringWrap.classList.remove('ring-flash'), 450);
+
+    // 2) a visible ring-wave expanding outward from the ring's position
+    const rect = ringWrap.getBoundingClientRect();
+    const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+    const wave = document.createElement('div');
+    wave.className = 'home-wave';
+    wave.style.left = cx + 'px';
+    wave.style.top = cy + 'px';
+    document.body.appendChild(wave);
+    wave.addEventListener('animationend', ()=>wave.remove());
+
+    // 3) stronger content warp synced with the wave
+    try{
+      const anim = document.getElementById('rippleAnim');
+      if(anim && anim.beginElement) anim.beginElement();
+    }catch(e){}
+  }, RING_FILL_DURATION);
 }
 
 function showScreen(id){
@@ -2018,8 +2043,9 @@ async function showBackupsScreen(){
 }
 document.getElementById('backupsCloseBtn').onclick = ()=>{ document.getElementById('backupsScreen').style.display = 'none'; };
 
+const RING_FILL_DURATION = 1800;
 function animateWeekCard(){
-  const duration = 1800;
+  const duration = RING_FILL_DURATION;
   const start = performance.now();
   const numEls = Array.from(document.querySelectorAll('.count-target')).map(el=>({
     el, target: parseInt(el.dataset.target, 10) || 0
