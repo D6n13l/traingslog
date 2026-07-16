@@ -107,16 +107,18 @@
   .week-card-main{display:flex; align-items:center; gap:16px;}
   .week-ring-wrap{position:relative; width:84px; height:84px; flex-shrink:0;}
   .week-ring-wrap::before{
-    content:''; position:absolute; inset:-18px; border-radius:50%;
-    background:radial-gradient(circle, var(--accent) 0%, transparent 65%);
-    filter:blur(13px); opacity:.25; z-index:0;
-    animation: ringGlowPulse 1.6s linear infinite;
+    content:''; position:absolute; inset:-20px; border-radius:50%;
+    background:radial-gradient(circle, var(--accent) 0%, transparent 60%);
+    filter:blur(20px); opacity:.2; z-index:0;
+    animation: ringGlowPulse 2.3s ease-in-out infinite;
   }
-  .week-ring-wrap.complete::before{ background:radial-gradient(circle, var(--glow-green) 0%, transparent 65%); }
+  .week-ring-wrap.complete::before{ background:radial-gradient(circle, var(--glow-green) 0%, transparent 60%); }
   @keyframes ringGlowPulse{
-    0%, 56%{ opacity:.22; transform:scale(.88); }
-    62%, 78%{ opacity:.95; transform:scale(1.2); }
-    84%, 100%{ opacity:.22; transform:scale(.88); }
+    0%{ opacity:.2; transform:scale(.9); }
+    4%{ opacity:.55; transform:scale(1.08); }
+    9%{ opacity:.2; transform:scale(.9); }
+    13%{ opacity:.55; transform:scale(1.08); }
+    18%, 100%{ opacity:.2; transform:scale(.9); }
   }
   .week-ring, .week-ring-label{position:relative; z-index:1;}
   .week-ring{width:100%; height:100%; transform:rotate(-90deg);}
@@ -484,6 +486,17 @@
     0%,100%{ opacity:0; }
     50%{ opacity:.4; }
   }
+  .update-banner{
+    position:fixed; top:calc(10px + var(--safe-t)); left:12px; right:12px; z-index:200;
+    background:var(--surface-3); border:1px solid var(--accent); border-radius:999px;
+    padding:10px 8px 10px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    box-shadow:0 4px 20px rgba(0,0,0,.4);
+  }
+  .update-banner span{font-size:12.5px; color:var(--text);}
+  .update-banner button{
+    font-family:'Oswald',sans-serif; font-weight:700; font-size:12.5px; color:#fff;
+    background:var(--accent); border:none; padding:8px 14px; border-radius:999px; cursor:pointer; flex-shrink:0;
+  }
   .toast{
     position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
     background:var(--surface-3); color:var(--text); border:1px solid var(--border-strong); padding:11px 18px; border-radius:999px;
@@ -845,6 +858,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
+const APP_BUILD = '2026-07-16-glow2';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -895,7 +909,7 @@ const UI_TEXT = {
     weight_placeholder:'kg', reps_placeholder:'Wdh.', pr_badge:'PR', edit_title:'Bearbeiten', delete_title:'Löschen',
     history_edit_save:'Änderungen speichern', section_main:'Hauptübungen', section_iso:'Isolationsübungen',
     firebase_reconnected_toast:'Wieder verbunden — Daten gespeichert ✓', timer_done:'Fertig',
-    backups_link:'Sicherungen anzeigen', backups_title:'Sicherungen', backups_empty:'Noch keine Sicherungen vorhanden.', backups_restore_btn:'Wiederherstellen', backups_restore_confirm:'Diesen Stand wiederherstellen? Der aktuelle Stand wird dadurch ersetzt.', backups_restored_toast:'Sicherung wiederhergestellt ✓', backups_close:'Schließen',
+    backups_link:'Sicherungen anzeigen', backups_title:'Sicherungen', backups_empty:'Noch keine Sicherungen vorhanden.', backups_restore_btn:'Wiederherstellen', backups_restore_confirm:'Diesen Stand wiederherstellen? Der aktuelle Stand wird dadurch ersetzt.', backups_restored_toast:'Sicherung wiederhergestellt ✓', backups_close:'Schließen', update_available:'Neue Version verfügbar', update_reload_btn:'Aktualisieren',
   },
   en: {
     gate_title:'Who\'s training?', gate_sub:'So history & weights are tracked correctly.',
@@ -934,7 +948,7 @@ const UI_TEXT = {
     weight_placeholder:'kg', reps_placeholder:'Reps', pr_badge:'PR', edit_title:'Edit', delete_title:'Delete',
     history_edit_save:'Save changes', section_main:'Main exercises', section_iso:'Isolation exercises',
     firebase_reconnected_toast:'Reconnected — data saved ✓', timer_done:'Done',
-    backups_link:'View backups', backups_title:'Backups', backups_empty:'No backups yet.', backups_restore_btn:'Restore', backups_restore_confirm:'Restore this snapshot? Your current data will be replaced.', backups_restored_toast:'Backup restored ✓', backups_close:'Close',
+    backups_link:'View backups', backups_title:'Backups', backups_empty:'No backups yet.', backups_restore_btn:'Restore', backups_restore_confirm:'Restore this snapshot? Your current data will be replaced.', backups_restored_toast:'Backup restored ✓', backups_close:'Close', update_available:'New version available', update_reload_btn:'Reload',
   },
   fr: {
     gate_title:'Qui s\'entraîne ?', gate_sub:'Pour que l\'historique et les poids soient bien attribués.',
@@ -973,7 +987,7 @@ const UI_TEXT = {
     weight_placeholder:'kg', reps_placeholder:'Rép.', pr_badge:'RP', edit_title:'Modifier', delete_title:'Supprimer',
     history_edit_save:'Enregistrer les modifications', section_main:'Exercices principaux', section_iso:'Exercices d\'isolation',
     firebase_reconnected_toast:'Reconnecté — données enregistrées ✓', timer_done:'Terminé',
-    backups_link:'Voir les sauvegardes', backups_title:'Sauvegardes', backups_empty:'Pas encore de sauvegarde.', backups_restore_btn:'Restaurer', backups_restore_confirm:'Restaurer cet état ? Les données actuelles seront remplacées.', backups_restored_toast:'Sauvegarde restaurée ✓', backups_close:'Fermer',
+    backups_link:'Voir les sauvegardes', backups_title:'Sauvegardes', backups_empty:'Pas encore de sauvegarde.', backups_restore_btn:'Restaurer', backups_restore_confirm:'Restaurer cet état ? Les données actuelles seront remplacées.', backups_restored_toast:'Sauvegarde restaurée ✓', backups_close:'Fermer', update_available:'Nouvelle version disponible', update_reload_btn:'Actualiser',
   },
   es: {
     gate_title:'¿Quién entrena?', gate_sub:'Para asignar bien el historial y los pesos.',
@@ -1012,7 +1026,7 @@ const UI_TEXT = {
     weight_placeholder:'kg', reps_placeholder:'Reps', pr_badge:'RP', edit_title:'Editar', delete_title:'Eliminar',
     history_edit_save:'Guardar cambios', section_main:'Ejercicios principales', section_iso:'Ejercicios de aislamiento',
     firebase_reconnected_toast:'Reconectado — datos guardados ✓', timer_done:'Listo',
-    backups_link:'Ver copias de seguridad', backups_title:'Copias de seguridad', backups_empty:'Aún no hay copias de seguridad.', backups_restore_btn:'Restaurar', backups_restore_confirm:'¿Restaurar este estado? Los datos actuales serán reemplazados.', backups_restored_toast:'Copia restaurada ✓', backups_close:'Cerrar',
+    backups_link:'Ver copias de seguridad', backups_title:'Copias de seguridad', backups_empty:'Aún no hay copias de seguridad.', backups_restore_btn:'Restaurar', backups_restore_confirm:'¿Restaurar este estado? Los datos actuales serán reemplazados.', backups_restored_toast:'Copia restaurada ✓', backups_close:'Cerrar', update_available:'Nueva versión disponible', update_reload_btn:'Actualizar',
   },
 };
 function t(key){ return (UI_TEXT[appLang] && UI_TEXT[appLang][key]) || UI_TEXT.de[key] || key; }
@@ -1616,6 +1630,33 @@ async function init(){
 
   renderHome();
   showScreen('screenHome');
+  checkForUpdate();
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible') checkForUpdate();
+});
+
+let updateBannerShown = false;
+async function checkForUpdate(){
+  if(updateBannerShown) return;
+  try{
+    const res = await fetch(window.location.href, { cache:'no-store' });
+    const text = await res.text();
+    const match = text.match(/const APP_BUILD = '([^']+)'/);
+    if(match && match[1] !== APP_BUILD){
+      showUpdateBanner();
+    }
+  }catch(e){ /* offline or blocked — ignore, not critical */ }
+}
+function showUpdateBanner(){
+  updateBannerShown = true;
+  const el = document.createElement('div');
+  el.className = 'update-banner';
+  el.innerHTML = `<span>${t('update_available')}</span><button id="updateReloadBtn">${t('update_reload_btn')}</button>`;
+  document.body.appendChild(el);
+  document.getElementById('updateReloadBtn').onclick = ()=>{
+    window.location.reload();
+  };
 }
 
 function showGate(){
