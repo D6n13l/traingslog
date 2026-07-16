@@ -64,6 +64,23 @@
   ::selection{background:var(--accent-soft-2);}
 
   .screen{display:none;}
+  #screenHome{filter:url(#rippleFilter);}
+  .ring-flash{animation:ringFlashOnce .45s ease-out;}
+  @keyframes ringFlashOnce{
+    0%{ filter:brightness(1); }
+    30%{ filter:brightness(3); }
+    100%{ filter:brightness(1); }
+  }
+  .home-wave{
+    position:fixed; width:20px; height:20px; margin:-10px 0 0 -10px;
+    border-radius:50%; border:2px solid var(--accent);
+    pointer-events:none; z-index:250;
+    animation: homeWaveExpand 1.8s cubic-bezier(.2,.6,.3,1) forwards;
+  }
+  @keyframes homeWaveExpand{
+    0%{ transform:scale(1); opacity:.9; border-width:3px; }
+    100%{ transform:scale(48); opacity:0; border-width:.5px; }
+  }
   .screen.active{display:block;}
 
   /* ---------- Bottom nav ---------- */
@@ -514,6 +531,26 @@
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute;">
+  <defs>
+    <radialGradient id="waveGradient" cx="18%" cy="9%" r="8%" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#000000"/>
+      <stop offset="82%" stop-color="#000000"/>
+      <stop offset="94%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#000000"/>
+      <animate id="waveRadiusAnim" attributeName="r" values="6%;90%" dur="1.8s" begin="indefinite" fill="freeze"/>
+    </radialGradient>
+    <rect id="waveGradientRect" x="0" y="0" width="100%" height="100%" fill="url(#waveGradient)"/>
+  </defs>
+  <filter id="rippleFilter" x="-20%" y="-20%" width="140%" height="140%" primitiveUnits="objectBoundingBox">
+    <feImage href="#waveGradientRect" x="0" y="0" width="1" height="1" result="waveMap" preserveAspectRatio="none"/>
+    <feDisplacementMap in="SourceGraphic" in2="waveMap" xChannelSelector="R" yChannelSelector="R">
+      <animate id="rippleAnim" attributeName="scale" values="0;13;13;0" keyTimes="0;0.1;0.75;1" dur="1.8s" begin="indefinite" fill="freeze"/>
+    </feDisplacementMap>
+  </filter>
+</svg>
+
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, get, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -909,7 +946,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-16-stability';
+const APP_BUILD = '2026-07-16-ripple4';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -1709,6 +1746,41 @@ async function buzzer(){
 }
 
 /* ============ Screens ============ */
+function triggerHomeRipple(){
+  setTimeout(()=>{
+    const ringWrap = document.querySelector('.week-ring-wrap');
+    if(!ringWrap) return;
+    const isComplete = ringWrap.classList.contains('complete');
+    const waveColor = isComplete ? 'var(--glow-green)' : 'var(--accent)';
+
+    // 1) brief bright flash right as the fill completes
+    ringWrap.classList.remove('ring-flash');
+    void ringWrap.offsetWidth;
+    ringWrap.classList.add('ring-flash');
+    setTimeout(()=>ringWrap.classList.remove('ring-flash'), 450);
+
+    // 2) a visible ring-wave expanding outward from the ring's position, colour-matched
+    const rect = ringWrap.getBoundingClientRect();
+    const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+    const wave = document.createElement('div');
+    wave.className = 'home-wave';
+    wave.style.left = cx + 'px';
+    wave.style.top = cy + 'px';
+    wave.style.borderColor = waveColor;
+    document.body.appendChild(wave);
+    wave.addEventListener('animationend', ()=>wave.remove());
+
+    // 3) content warp: an actual expanding-circle displacement map grows in sync
+    // with the visible wave, so the distortion genuinely travels outward as a ring
+    try{
+      const radiusAnim = document.getElementById('waveRadiusAnim');
+      const scaleAnim = document.getElementById('rippleAnim');
+      if(radiusAnim && radiusAnim.beginElement) radiusAnim.beginElement();
+      if(scaleAnim && scaleAnim.beginElement) scaleAnim.beginElement();
+    }catch(e){}
+  }, RING_FILL_DURATION);
+}
+
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1720,6 +1792,7 @@ function showScreen(id){
       b.classList.toggle('active', (id==='screenHome' && b.dataset.nav==='home') || (id==='screenHistory' && b.dataset.nav==='history'));
     });
   }
+  if(id === 'screenHome') triggerHomeRipple();
 }
 document.querySelectorAll('.nav-item').forEach(b=>{
   b.onclick = ()=>{
@@ -1987,8 +2060,9 @@ async function showBackupsScreen(){
 }
 document.getElementById('backupsCloseBtn').onclick = ()=>{ document.getElementById('backupsScreen').style.display = 'none'; };
 
+const RING_FILL_DURATION = 1800;
 function animateWeekCard(){
-  const duration = 1800;
+  const duration = RING_FILL_DURATION;
   const start = performance.now();
   const numEls = Array.from(document.querySelectorAll('.count-target')).map(el=>({
     el, target: parseInt(el.dataset.target, 10) || 0
