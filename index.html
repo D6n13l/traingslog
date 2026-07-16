@@ -852,6 +852,57 @@ function maximalkraftProgram(){
     ]
   };
 }
+function stabilityProgram(){
+  return {
+    id:'stability', name:'Stability', subtitle:'4er Split · Rumpf, Gleichgewicht & Kontrolle · Beine / Push / Pull / Beine', builtIn:true,
+    days:[
+      { id:'s1', label:'Tag 1', title:'Beine', sub:'Stabilität · Gleichgewicht & Kontrolle',
+        main:[
+          {id:'s1_pistolbox', name:'Pistol Squat auf Box (assistiert)', sets:4, target:'8/Seite', tips:['Kontrolliert absenken, keine Wackler im Knie','Ferse bleibt am Boden','Nur so tief wie stabil kontrollierbar']},
+          {id:'s1_bulgarian', name:'Bulgarische Split Squat (langsames Tempo, 3 Sek. runter)', sets:3, target:'10/Seite', tips:['3 Sekunden kontrolliert absenken','Vorderes Knie bleibt über dem Fußgelenk','Rumpf während der ganzen Bewegung stabil halten']},
+          {id:'s1_slrdl', name:'Einbeiniges Rumänisches Kreuzheben', sets:4, target:'8/Seite', tips:['Hüfte und Schultern bleiben gerade zum Boden','Standbein nur leicht gebeugt','Langsam, kein Schwung aus dem Hüftschwung']},
+        ],
+        iso:[
+          {id:'s1_standwaage', name:'Standwaage (Balance-Halten)', sets:3, target:'30 Sek./Seite', tips:['Blick auf einen festen Punkt richten','Rumpf fest anspannen für mehr Stabilität','Bei Wackeln kurz aus der Position und neu ansetzen']},
+          {id:'s1_wadenheben', name:'Einbeinige Wadenheben (langsames Tempo)', sets:3, target:'15/Seite', tips:['Kontrolliert absenken, nicht fallen lassen','Volle Amplitude für Stabilität im Sprunggelenk']},
+        ]
+      },
+      { id:'s2', label:'Tag 2', title:'Push', sub:'Stabilität · Rumpf & Kontrolle',
+        main:[
+          {id:'s2_liegestuetz_tempo', name:'Liegestütze (3 Sek. Tempo runter, kurze Pause unten)', sets:4, target:'8–10', tips:['3 Sekunden kontrolliert absenken','Kurze Pause knapp über dem Boden ohne abzulegen','Körper bleibt durchgehend in einer Linie']},
+          {id:'s2_ohp_einarm', name:'Einarmiges Schulterdrücken (Kurzhantel)', sets:4, target:'8/Seite', tips:['Rumpf aktiv gegen die einseitige Belastung anspannen','Nicht zur Seite ausweichen oder kippen','Kontrolliertes Tempo in beide Richtungen']},
+          {id:'s2_plank_pushup', name:'Plank-to-Push-up', sets:3, target:'10', tips:['Hüfte bleibt während des Wechsels ruhig, kein Kippen','Abwechselnd mit beiden Armen beginnen','Langsames, kontrolliertes Tempo statt Geschwindigkeit']},
+        ],
+        iso:[
+          {id:'s2_pallof', name:'Pallof Press (Anti-Rotation)', sets:3, target:'12/Seite', tips:['Rumpf aktiv gegen die Drehung der Zugrichtung stemmen','Arme langsam ausstrecken und wieder heranziehen','Hüfte bleibt gerade nach vorne ausgerichtet']},
+          {id:'s2_seitheben_langsam', name:'Seitheben einarmig (langsames Tempo)', sets:3, target:'12/Seite', tips:['Nur bis Schulterhöhe, kein Schwung','Langsames Absenken über 3 Sekunden']},
+        ]
+      },
+      { id:'s3', label:'Tag 3', title:'Pull', sub:'Stabilität · Rumpf & Kontrolle',
+        main:[
+          {id:'s3_rudern_einarm_langsam', name:'Einarmiges Rudern (kontrolliertes Tempo)', sets:4, target:'10/Seite', tips:['Rumpf bleibt stabil, keine Rotation zur Zugseite','Langsames, kontrolliertes Tempo in beide Richtungen','Ellbogen nah am Körper nach hinten ziehen']},
+          {id:'s3_birddog', name:'Bird Dog', sets:3, target:'12/Seite', tips:['Gegenüberliegender Arm und Bein gleichzeitig ausstrecken','Rücken bleibt gerade, kein Durchhängen','Langsam und kontrolliert, kurzer Halt in der Endposition']},
+          {id:'s3_deadbug', name:'Dead Bug', sets:3, target:'12/Seite', tips:['Unterer Rücken bleibt die ganze Zeit am Boden','Gegenüberliegender Arm und Bein gleichzeitig bewegen','Langsames, kontrolliertes Tempo']},
+        ],
+        iso:[
+          {id:'s3_facepulls', name:'Face Pulls (kontrolliert)', sets:3, target:'15', tips:['Ellbogen höher als Hände ziehen','Langsames Tempo, kein Schwung']},
+          {id:'s3_sideplank', name:'Seitliche Plank', sets:3, target:'30–45 Sek./Seite', tips:['Hüfte während der ganzen Zeit anheben, nicht absinken lassen','Körper bildet eine gerade Linie von Kopf bis Fuß']},
+        ]
+      },
+      { id:'s4', label:'Tag 4', title:'Beine Hinterseite', sub:'Stabilität · Ganzkörper-Kontrolle',
+        main:[
+          {id:'s4_slrdl_reach', name:'Einbeiniges Kreuzheben mit Reach', sets:4, target:'8/Seite', tips:['Mit der freien Hand kontrolliert nach vorne reichen','Hüfte bleibt gerade zum Boden ausgerichtet','Standbein nur leicht gebeugt, Gleichgewicht halten']},
+          {id:'s4_stepup', name:'Step-Ups (kontrolliert)', sets:3, target:'10/Seite', tips:['Ganzen Fuß auf die Stufe setzen, nicht nur die Fußspitze','Kontrolliert hoch und runter, kein Abstoßen mit dem hinteren Bein','Oben kurz das Gleichgewicht auf einem Bein halten']},
+          {id:'s4_gluteBridge', name:'Einbeinige Glute Bridge', sets:3, target:'12/Seite', tips:['Oben volle Hüftstreckung mit Gesäß-Anspannung','Becken bleibt gerade, nicht zur Seite kippen','Kontrolliert absenken, nicht fallen lassen']},
+        ],
+        iso:[
+          {id:'s4_standwaage', name:'Standwaage (Balance-Halten)', sets:3, target:'30 Sek./Seite', tips:['Blick auf einen festen Punkt richten','Rumpf fest anspannen für mehr Stabilität']},
+          {id:'s4_plank', name:'Plank (klassisch)', sets:3, target:'45–60 Sek.', tips:['Körper bildet eine gerade Linie von Kopf bis Ferse','Gesäß nicht hochschieben, Rücken nicht durchhängen lassen','Gleichmäßig weiteratmen']},
+        ]
+      }
+    ]
+  };
+}
 const REST_MAIN = 150, REST_ISO = 75;
 function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,8); }
 function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
@@ -1222,6 +1273,67 @@ const EX_I18N = {
   m4_wadenheben:{ en:{name:'Seated Calf Raise (heavy)', target:'6', tips:['Full range of motion, controlled descent']},
     fr:{name:'Mollets assis (lourd)', target:'6', tips:['Amplitude complète, descente contrôlée']},
     es:{name:'Elevación de talones sentado (pesado)', target:'6', tips:['Rango completo, bajada controlada']} },
+  // ---- Stability (s1-s4) ----
+  s1_pistolbox:{ en:{name:'Pistol Squat on Box (assisted)', target:'8/side', tips:['Lower under control, no wobbling in the knee','Heel stays on the floor','Only as deep as you can control']},
+    fr:{name:'Pistol Squat sur box (assisté)', target:'8/côté', tips:['Descendre de façon contrôlée, sans instabilité du genou','Le talon reste au sol','Aussi profond que vous pouvez le contrôler']},
+    es:{name:'Sentadilla pistol en cajón (asistida)', target:'8/lado', tips:['Baja de forma controlada, sin que la rodilla tiemble','El talón se mantiene en el suelo','Solo tan profundo como puedas controlar']} },
+  s1_bulgarian:{ en:{name:'Bulgarian Split Squat (slow tempo, 3-sec descent)', target:'10/side', tips:['Lower over 3 controlled seconds','Front knee stays over the ankle','Keep the core braced throughout']},
+    fr:{name:'Fentes bulgares (tempo lent, 3 sec. de descente)', target:'10/côté', tips:['Descendre sur 3 secondes contrôlées','Le genou avant reste au-dessus de la cheville','Gainer le tronc pendant tout le mouvement']},
+    es:{name:'Zancada búlgara (tempo lento, 3 seg. de bajada)', target:'10/lado', tips:['Baja en 3 segundos controlados','La rodilla delantera se mantiene sobre el tobillo','Mantén el core activado todo el movimiento']} },
+  s1_slrdl:{ en:{name:'Single-Leg Romanian Deadlift', target:'8/side', tips:['Hips and shoulders stay square to the floor','Standing leg only slightly bent','Slow, no swinging from the hip']},
+    fr:{name:'Soulevé de terre roumain unilatéral', target:'8/côté', tips:['Hanches et épaules restent parallèles au sol','Jambe d\'appui légèrement fléchie','Lent, sans élan de la hanche']},
+    es:{name:'Peso muerto rumano a una pierna', target:'8/lado', tips:['Cadera y hombros se mantienen paralelos al suelo','Pierna de apoyo solo ligeramente flexionada','Lento, sin impulso de cadera']} },
+  s1_standwaage:{ en:{name:'Single-Leg Balance Hold', target:'30 sec./side', tips:['Fix your gaze on a steady point','Brace the core for more stability','If you wobble, briefly reset and start again']},
+    fr:{name:'Équilibre sur une jambe', target:'30 sec./côté', tips:['Fixer le regard sur un point stable','Gainer le tronc pour plus de stabilité','En cas de déséquilibre, se repositionner brièvement']},
+    es:{name:'Equilibrio a una pierna', target:'30 seg./lado', tips:['Fija la mirada en un punto estable','Activa el core para más estabilidad','Si te tambaleas, reinicia brevemente la posición']} },
+  s1_wadenheben:{ en:{name:'Single-Leg Calf Raise (slow tempo)', target:'15/side', tips:['Lower under control, don\'t drop','Full range of motion for ankle stability']},
+    fr:{name:'Mollets unilatéral (tempo lent)', target:'15/côté', tips:['Descente contrôlée, sans lâcher','Amplitude complète pour la stabilité de la cheville']},
+    es:{name:'Elevación de talón a una pierna (tempo lento)', target:'15/lado', tips:['Baja de forma controlada, no dejes caer','Rango completo para la estabilidad del tobillo']} },
+  s2_liegestuetz_tempo:{ en:{name:'Push-ups (3-sec descent, brief pause at bottom)', target:'8–10', tips:['Lower over 3 controlled seconds','Brief pause just above the floor without resting','Body stays in one straight line throughout']},
+    fr:{name:'Pompes (3 sec. de descente, pause en bas)', target:'8–10', tips:['Descendre sur 3 secondes contrôlées','Courte pause juste au-dessus du sol sans se reposer','Le corps reste aligné tout du long']},
+    es:{name:'Flexiones (3 seg. de bajada, pausa breve abajo)', target:'8–10', tips:['Baja en 3 segundos controlados','Pausa breve justo encima del suelo sin apoyarte','El cuerpo se mantiene alineado todo el tiempo']} },
+  s2_ohp_einarm:{ en:{name:'Single-Arm Overhead Press (dumbbell)', target:'8/side', tips:['Actively brace the core against the one-sided load','Don\'t lean or tip to the side','Controlled tempo in both directions']},
+    fr:{name:'Développé militaire à un bras (haltère)', target:'8/côté', tips:['Gainer activement le tronc contre la charge asymétrique','Ne pas se pencher ou basculer sur le côté','Tempo contrôlé dans les deux sens']},
+    es:{name:'Press militar a un brazo (mancuerna)', target:'8/lado', tips:['Activa el core contra la carga asimétrica','No te inclines ni te ladees','Tempo controlado en ambos sentidos']} },
+  s2_plank_pushup:{ en:{name:'Plank-to-Push-up', target:'10', tips:['Hips stay still during the transition, no rocking','Alternate which arm leads','Slow, controlled tempo over speed']},
+    fr:{name:'Plank-to-Push-up', target:'10', tips:['Les hanches restent stables pendant la transition','Alterner le bras qui commence','Tempo lent et contrôlé plutôt que rapide']},
+    es:{name:'Plank-to-Push-up', target:'10', tips:['La cadera se mantiene quieta durante la transición','Alterna qué brazo empieza','Prioriza un tempo lento y controlado']} },
+  s2_pallof:{ en:{name:'Pallof Press (anti-rotation)', target:'12/side', tips:['Actively resist the pull trying to rotate your torso','Extend arms slowly and pull back with control','Hips stay square facing forward']},
+    fr:{name:'Pallof Press (anti-rotation)', target:'12/côté', tips:['Résister activement à la traction qui tourne le buste','Étendre les bras lentement et les ramener avec contrôle','Les hanches restent face à l\'avant']},
+    es:{name:'Pallof Press (anti-rotación)', target:'12/lado', tips:['Resiste activamente la tracción que rota el torso','Extiende los brazos despacio y vuelve con control','La cadera se mantiene orientada al frente']} },
+  s2_seitheben_langsam:{ en:{name:'Single-Arm Lateral Raise (slow tempo)', target:'12/side', tips:['Only up to shoulder height, no swinging','Lower over 3 controlled seconds']},
+    fr:{name:'Élévation latérale à un bras (tempo lent)', target:'12/côté', tips:['Seulement jusqu\'à hauteur d\'épaule, sans élan','Descendre sur 3 secondes contrôlées']},
+    es:{name:'Elevación lateral a un brazo (tempo lento)', target:'12/lado', tips:['Solo hasta la altura del hombro, sin impulso','Baja en 3 segundos controlados']} },
+  s3_rudern_einarm_langsam:{ en:{name:'One-Arm Row (controlled tempo)', target:'10/side', tips:['Core stays stable, no rotating toward the pulling side','Slow, controlled tempo in both directions','Pull elbow back close to the body']},
+    fr:{name:'Rowing à un bras (tempo contrôlé)', target:'10/côté', tips:['Le tronc reste stable, sans rotation vers le côté qui tire','Tempo lent et contrôlé dans les deux sens','Tirer le coude vers l\'arrière, près du corps']},
+    es:{name:'Remo a un brazo (tempo controlado)', target:'10/lado', tips:['El core se mantiene estable, sin rotar hacia el lado que tira','Tempo lento y controlado en ambos sentidos','Lleva el codo hacia atrás, cerca del cuerpo']} },
+  s3_birddog:{ en:{name:'Bird Dog', target:'12/side', tips:['Extend the opposite arm and leg at the same time','Back stays flat, no sagging','Slow and controlled, brief hold at the end position']},
+    fr:{name:'Bird Dog', target:'12/côté', tips:['Étendre le bras et la jambe opposés en même temps','Le dos reste plat, sans s\'affaisser','Lent et contrôlé, courte pause en position finale']},
+    es:{name:'Bird Dog', target:'12/lado', tips:['Extiende el brazo y la pierna opuestos a la vez','La espalda se mantiene plana, sin hundirse','Lento y controlado, pausa breve en la posición final']} },
+  s3_deadbug:{ en:{name:'Dead Bug', target:'12/side', tips:['Lower back stays on the floor the whole time','Move the opposite arm and leg together','Slow, controlled tempo']},
+    fr:{name:'Dead Bug', target:'12/côté', tips:['Le bas du dos reste au sol tout du long','Bouger le bras et la jambe opposés ensemble','Tempo lent et contrôlé']},
+    es:{name:'Dead Bug', target:'12/lado', tips:['La zona lumbar se mantiene en el suelo todo el tiempo','Mueve el brazo y la pierna opuestos juntos','Tempo lento y controlado']} },
+  s3_facepulls:{ en:{name:'Face Pulls (controlled)', target:'15', tips:['Pull elbows higher than hands','Slow tempo, no swinging']},
+    fr:{name:'Face Pulls (contrôlé)', target:'15', tips:['Tirer les coudes plus haut que les mains','Tempo lent, sans élan']},
+    es:{name:'Face Pulls (controlado)', target:'15', tips:['Tira con los codos más altos que las manos','Tempo lento, sin impulso']} },
+  s3_sideplank:{ en:{name:'Side Plank', target:'30–45 sec./side', tips:['Keep the hips lifted the whole time, don\'t let them sag','Body forms one straight line from head to feet']},
+    fr:{name:'Planche latérale', target:'30–45 sec./côté', tips:['Garder les hanches levées tout du long, sans s\'affaisser','Le corps forme une ligne droite de la tête aux pieds']},
+    es:{name:'Plancha lateral', target:'30–45 seg./lado', tips:['Mantén la cadera elevada todo el tiempo, sin hundirla','El cuerpo forma una línea recta de la cabeza a los pies']} },
+  s4_slrdl_reach:{ en:{name:'Single-Leg Deadlift with Reach', target:'8/side', tips:['Reach forward with the free hand in a controlled way','Hips stay square to the floor','Standing leg only slightly bent, keep your balance']},
+    fr:{name:'Soulevé de terre unilatéral avec extension', target:'8/côté', tips:['Tendre la main libre vers l\'avant de façon contrôlée','Les hanches restent parallèles au sol','Jambe d\'appui légèrement fléchie, garder l\'équilibre']},
+    es:{name:'Peso muerto a una pierna con alcance', target:'8/lado', tips:['Extiende la mano libre hacia delante de forma controlada','La cadera se mantiene paralela al suelo','Pierna de apoyo solo ligeramente flexionada, mantén el equilibrio']} },
+  s4_stepup:{ en:{name:'Step-Ups (controlled)', target:'10/side', tips:['Place the whole foot on the step, not just the toes','Controlled up and down, don\'t push off with the back leg','Briefly hold your balance on one leg at the top']},
+    fr:{name:'Step-Ups (contrôlé)', target:'10/côté', tips:['Poser tout le pied sur la marche, pas juste les orteils','Monter et descendre de façon contrôlée, sans pousser avec la jambe arrière','Tenir brièvement l\'équilibre sur une jambe en haut']},
+    es:{name:'Step-Ups (controlado)', target:'10/lado', tips:['Apoya todo el pie en el escalón, no solo la punta','Sube y baja de forma controlada, sin impulsarte con la pierna trasera','Mantén brevemente el equilibrio en una pierna arriba']} },
+  s4_gluteBridge:{ en:{name:'Single-Leg Glute Bridge', target:'12/side', tips:['Full hip extension at the top with a glute squeeze','Pelvis stays level, don\'t tilt to the side','Lower under control, don\'t drop']},
+    fr:{name:'Pont fessier unilatéral', target:'12/côté', tips:['Extension complète des hanches en haut avec contraction des fessiers','Le bassin reste de niveau, sans basculer sur le côté','Descente contrôlée, sans lâcher']},
+    es:{name:'Puente de glúteo a una pierna', target:'12/lado', tips:['Extensión completa de cadera arriba apretando glúteo','La pelvis se mantiene nivelada, sin inclinarse','Baja de forma controlada, no dejes caer']} },
+  s4_standwaage:{ en:{name:'Single-Leg Balance Hold', target:'30 sec./side', tips:['Fix your gaze on a steady point','Brace the core for more stability']},
+    fr:{name:'Équilibre sur une jambe', target:'30 sec./côté', tips:['Fixer le regard sur un point stable','Gainer le tronc pour plus de stabilité']},
+    es:{name:'Equilibrio a una pierna', target:'30 seg./lado', tips:['Fija la mirada en un punto estable','Activa el core para más estabilidad']} },
+  s4_plank:{ en:{name:'Plank (classic)', target:'45–60 sec.', tips:['Body forms one straight line from head to heels','Don\'t let the hips pike up or sag down','Keep breathing evenly']},
+    fr:{name:'Planche (classique)', target:'45–60 sec.', tips:['Le corps forme une ligne droite de la tête aux talons','Ne pas lever ni affaisser les hanches','Respirer régulièrement']},
+    es:{name:'Plancha (clásica)', target:'45–60 seg.', tips:['El cuerpo forma una línea recta de la cabeza a los talones','No levantes ni hundas la cadera','Respira de forma constante']} },
 };
 const PROGRAM_I18N = {
   beine_4er: {
@@ -1274,6 +1386,23 @@ const PROGRAM_I18N = {
              m2:{label:'Día 2', title:'Push', sub:'Fuerza máxima · Enfoque press banca'},
              m3:{label:'Día 3', title:'Pull', sub:'Fuerza máxima · Enfoque peso muerto'},
              m4:{label:'Día 4', title:'Piernas (posterior)', sub:'Fuerza máxima · Enfoque extensión de cadera'} } },
+  },
+  stability: {
+    en:{ name:'Stability', subtitle:'4-day split · Core, balance & control · Legs / Push / Pull / Legs',
+      days:{ s1:{label:'Day 1', title:'Legs', sub:'Stability · Balance & control'},
+             s2:{label:'Day 2', title:'Push', sub:'Stability · Core & control'},
+             s3:{label:'Day 3', title:'Pull', sub:'Stability · Core & control'},
+             s4:{label:'Day 4', title:'Legs (Back)', sub:'Stability · Full-body control'} } },
+    fr:{ name:'Stability', subtitle:'Split en 4 jours · Gainage, équilibre & contrôle · Jambes / Push / Pull / Jambes',
+      days:{ s1:{label:'Jour 1', title:'Jambes', sub:'Stabilité · Équilibre & contrôle'},
+             s2:{label:'Jour 2', title:'Push', sub:'Stabilité · Gainage & contrôle'},
+             s3:{label:'Jour 3', title:'Pull', sub:'Stabilité · Gainage & contrôle'},
+             s4:{label:'Jour 4', title:'Jambes (arrière)', sub:'Stabilité · Contrôle du corps entier'} } },
+    es:{ name:'Stability', subtitle:'Split de 4 días · Core, equilibrio y control · Piernas / Push / Pull / Piernas',
+      days:{ s1:{label:'Día 1', title:'Piernas', sub:'Estabilidad · Equilibrio y control'},
+             s2:{label:'Día 2', title:'Push', sub:'Estabilidad · Core y control'},
+             s3:{label:'Día 3', title:'Pull', sub:'Estabilidad · Core y control'},
+             s4:{label:'Día 4', title:'Piernas (posterior)', sub:'Estabilidad · Control de cuerpo completo'} } },
   },
 };
 function localizeExercise(ex){
@@ -1604,6 +1733,7 @@ const BUILTIN_PROGRAMS = [
   { id: 'beine_4er', factory: defaultProgram },
   { id: 'home_bodyweight', factory: homeProgram },
   { id: 'maximalkraft', factory: maximalkraftProgram },
+  { id: 'stability', factory: stabilityProgram },
 ];
 
 async function init(){
