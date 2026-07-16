@@ -64,6 +64,13 @@
   ::selection{background:var(--accent-soft-2);}
 
   .screen{display:none;}
+  #screenHome{filter:url(#rippleFilter);}
+  .ring-flash{animation:ringFlashOnce .5s ease-out;}
+  @keyframes ringFlashOnce{
+    0%{ filter:brightness(1); }
+    25%{ filter:brightness(2.2); }
+    100%{ filter:brightness(1); }
+  }
   .screen.active{display:block;}
 
   /* ---------- Bottom nav ---------- */
@@ -514,6 +521,15 @@
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute;">
+  <filter id="rippleFilter" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" numOctaves="2" baseFrequency="0.012 0.018" seed="7" result="rippleNoise"/>
+    <feDisplacementMap in="SourceGraphic" in2="rippleNoise" xChannelSelector="R" yChannelSelector="G">
+      <animate id="rippleAnim" attributeName="scale" values="0;9;0" keyTimes="0;0.35;1" dur="1.2s" begin="indefinite"/>
+    </feDisplacementMap>
+  </filter>
+</svg>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, get, set, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -909,7 +925,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-16-stability';
+const APP_BUILD = '2026-07-16-ripple';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -1709,6 +1725,20 @@ async function buzzer(){
 }
 
 /* ============ Screens ============ */
+function triggerHomeRipple(){
+  try{
+    const anim = document.getElementById('rippleAnim');
+    if(anim && anim.beginElement) anim.beginElement();
+  }catch(e){}
+  const ringWrap = document.querySelector('.week-ring-wrap');
+  if(ringWrap){
+    ringWrap.classList.remove('ring-flash');
+    void ringWrap.offsetWidth;
+    ringWrap.classList.add('ring-flash');
+    setTimeout(()=>ringWrap.classList.remove('ring-flash'), 550);
+  }
+}
+
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1720,6 +1750,7 @@ function showScreen(id){
       b.classList.toggle('active', (id==='screenHome' && b.dataset.nav==='home') || (id==='screenHistory' && b.dataset.nav==='history'));
     });
   }
+  if(id === 'screenHome') triggerHomeRipple();
 }
 document.querySelectorAll('.nav-item').forEach(b=>{
   b.onclick = ()=>{
