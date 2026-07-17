@@ -81,6 +81,14 @@
     0%{ transform:scale(1); opacity:.9; border-width:3px; }
     100%{ transform:scale(48); opacity:0; border-width:.5px; }
   }
+  .home-wave-echo{
+    animation-name: homeWaveExpandEcho;
+    border-width:1.5px;
+  }
+  @keyframes homeWaveExpandEcho{
+    0%{ transform:scale(1); opacity:.45; border-width:1.5px; }
+    100%{ transform:scale(38); opacity:0; border-width:.5px; }
+  }
   .screen.active{display:block;}
 
   /* ---------- Bottom nav ---------- */
@@ -162,22 +170,62 @@
   .week-ring-orb{
     position:absolute; inset:14px; border-radius:50%; z-index:1; overflow:hidden;
     background:
-      radial-gradient(circle at 30% 24%, rgba(255,255,255,.6), rgba(255,255,255,.08) 34%, rgba(255,255,255,0) 52%),
-      radial-gradient(circle at 72% 84%, rgba(0,0,0,.22), rgba(0,0,0,0) 58%),
-      linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.03) 45%, rgba(255,255,255,.08) 100%);
-    border:1px solid rgba(255,255,255,.32);
+      radial-gradient(circle at 30% 24%, rgba(255,255,255,.5), rgba(255,255,255,.04) 36%, rgba(255,255,255,0) 55%),
+      radial-gradient(circle at 74% 86%, rgba(0,0,0,.14), rgba(0,0,0,0) 60%),
+      linear-gradient(160deg, rgba(255,255,255,.1), rgba(255,255,255,.015) 45%, rgba(255,255,255,.04) 100%);
+    border:1px solid rgba(255,255,255,.22);
     box-shadow:
-      inset 0 2px 3px rgba(255,255,255,.55),
-      inset 0 -7px 11px rgba(0,0,0,.28),
-      0 2px 5px rgba(0,0,0,.25);
-    backdrop-filter:blur(2.5px) saturate(165%);
-    -webkit-backdrop-filter:blur(2.5px) saturate(165%);
+      inset 0 2px 3px rgba(255,255,255,.5),
+      inset 0 -6px 10px rgba(0,0,0,.2),
+      inset 0 0 0 1px rgba(255,255,255,.12),
+      0 2px 5px rgba(0,0,0,.22);
+    backdrop-filter:blur(1.5px) saturate(180%);
+    -webkit-backdrop-filter:blur(1.5px) saturate(180%);
   }
-  /* sharp specular glint, like light catching curved glass */
+  /* soft broad highlight bloom, sits under the smoke for depth */
+  .week-ring-orb::before{
+    content:''; position:absolute; top:6%; left:14%; width:52%; height:40%;
+    border-radius:50%; background:radial-gradient(ellipse, rgba(255,255,255,.5), transparent 70%);
+    filter:blur(3px); z-index:0;
+  }
+  /* soft rauch layers, illuminated by the pulsing light core underneath */
+  .week-ring-orb-smoke{
+    position:absolute; inset:0; border-radius:50%; overflow:hidden; z-index:1;
+    opacity:0; animation:smokeFadeIn 1.6s ease-out forwards;
+    animation-delay:var(--smoke-delay, 1.8s);
+  }
+  @keyframes smokeFadeIn{ to{ opacity:1; } }
+  .week-ring-orb-smoke-layer{
+    position:absolute; inset:-25%; border-radius:50%;
+    mix-blend-mode:soft-light; filter:blur(4px);
+  }
+  .week-ring-orb-smoke-layer.a{
+    background:
+      radial-gradient(circle at 32% 62%, rgba(255,255,255,.65), transparent 46%),
+      radial-gradient(circle at 68% 32%, rgba(255,255,255,.4), transparent 44%);
+    animation: smokeSpinA 17s linear infinite;
+  }
+  .week-ring-orb-smoke-layer.b{
+    background:
+      radial-gradient(circle at 55% 72%, rgba(255,255,255,.45), transparent 50%),
+      radial-gradient(circle at 24% 22%, rgba(255,255,255,.3), transparent 52%);
+    animation: smokeSpinB 23s linear infinite reverse;
+  }
+  @keyframes smokeSpinA{
+    0%{ transform:rotate(0deg) scale(1); }
+    50%{ transform:rotate(180deg) scale(1.18); }
+    100%{ transform:rotate(360deg) scale(1); }
+  }
+  @keyframes smokeSpinB{
+    0%{ transform:rotate(0deg) scale(1.12); }
+    50%{ transform:rotate(-180deg) scale(.94); }
+    100%{ transform:rotate(-360deg) scale(1.12); }
+  }
+  /* sharp specular glint on top, like light catching curved glass */
   .week-ring-orb::after{
-    content:''; position:absolute; top:13%; left:20%; width:28%; height:15%;
-    border-radius:50%; background:rgba(255,255,255,.8); filter:blur(1.5px);
-    transform:rotate(-25deg);
+    content:''; position:absolute; top:12%; left:19%; width:24%; height:12%;
+    border-radius:50%; background:rgba(255,255,255,.7); filter:blur(2px);
+    transform:rotate(-25deg); z-index:2;
   }
   .week-ring-label{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -1003,7 +1051,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-orb-glassier';
+const APP_BUILD = '2026-07-17-smoke-echo';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -1822,7 +1870,8 @@ function triggerHomeRipple(){
     ringWrap.classList.add('ring-flash');
     setTimeout(()=>ringWrap.classList.remove('ring-flash'), 450);
 
-    // 2) a visible ring-wave expanding outward from the ring's position, colour-matched
+    // 2) a visible ring-wave expanding outward from the ring's position, colour-matched,
+    // immediately followed by a second, weaker echo wave
     const rect = ringWrap.getBoundingClientRect();
     const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
     const wave = document.createElement('div');
@@ -1832,6 +1881,16 @@ function triggerHomeRipple(){
     wave.style.borderColor = waveColor;
     document.body.appendChild(wave);
     wave.addEventListener('animationend', ()=>wave.remove());
+
+    setTimeout(()=>{
+      const echo = document.createElement('div');
+      echo.className = 'home-wave home-wave-echo';
+      echo.style.left = cx + 'px';
+      echo.style.top = cy + 'px';
+      echo.style.borderColor = waveColor;
+      document.body.appendChild(echo);
+      echo.addEventListener('animationend', ()=>echo.remove());
+    }, 160);
 
     // 3) content warp: an actual expanding-circle displacement map grows in sync
     // with the visible wave, so the distortion genuinely travels outward as a ring
@@ -1901,6 +1960,7 @@ async function init(){
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState === 'visible') checkForUpdate();
 });
+setInterval(()=>{ if(document.visibilityState === 'visible') checkForUpdate(); }, 60 * 1000);
 
 let updateBannerShown = false;
 const UPDATE_CHECK_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
@@ -2016,7 +2076,12 @@ function renderHome(){
           <circle class="week-ring-fill${pct >= 100 ? ' complete' : ''}" cx="50" cy="50" r="42" data-target-pct="${pct}"/>
         </svg>
         <div class="week-ring-orb-glow"></div>
-        <div class="week-ring-orb"></div>
+        <div class="week-ring-orb" style="--smoke-delay:${RING_FILL_DURATION}ms">
+          <div class="week-ring-orb-smoke">
+            <div class="week-ring-orb-smoke-layer a"></div>
+            <div class="week-ring-orb-smoke-layer b"></div>
+          </div>
+        </div>
         <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
       </div>
       <div class="week-card-info">
