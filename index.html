@@ -969,7 +969,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-16-reorder';
+const APP_BUILD = '2026-07-16-bandwidth';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -1593,30 +1593,36 @@ const MAX_BACKUPS = 25;
 async function saveBackupSnapshot(data){
   try{
     if(!window.__fb) return;
-    const raw = await window.__fb.get('trainingslog_backups');
-    let backups = {};
-    try{ backups = raw ? JSON.parse(raw) : {}; }catch(e){ backups = {}; }
-    backups[Date.now()] = data;
-    const keys = Object.keys(backups).map(Number).sort((a,b)=>a-b);
-    while(keys.length > MAX_BACKUPS){ delete backups[keys.shift()]; }
-    await window.__fb.set('trainingslog_backups', JSON.stringify(backups));
+    await window.__fb.set('trainingslog_backups/' + Date.now(), JSON.stringify(data));
+    // Only occasionally check whether old backups need pruning — this is the one
+    // expensive "read everything" operation, so we keep it rare instead of doing
+    // it on every single save.
+    if(Math.random() < 0.1){ await pruneOldBackups(); }
   }catch(e){ console.warn('Backup-Snapshot fehlgeschlagen', e); }
+}
+async function pruneOldBackups(){
+  try{
+    const rawObj = await window.__fb.get('trainingslog_backups');
+    if(!rawObj) return;
+    const keys = Object.keys(rawObj).map(Number).sort((a,b)=>a-b);
+    while(keys.length > MAX_BACKUPS){
+      const oldest = keys.shift();
+      await window.__fb.set('trainingslog_backups/' + oldest, null);
+    }
+  }catch(e){ /* not critical */ }
 }
 async function listBackups(){
   try{
     if(!window.__fb) return [];
-    const raw = await window.__fb.get('trainingslog_backups');
-    if(!raw) return [];
-    const backups = JSON.parse(raw);
-    return Object.keys(backups).map(Number).sort((a,b)=>b-a).map(ts=>({ ts, data: backups[ts] }));
+    const rawObj = await window.__fb.get('trainingslog_backups');
+    if(!rawObj) return [];
+    return Object.keys(rawObj).map(Number).sort((a,b)=>b-a).map(ts=>({ ts, data: JSON.parse(rawObj[ts]) }));
   }catch(e){ return []; }
 }
 async function restoreBackup(ts){
-  const raw = await window.__fb.get('trainingslog_backups');
-  if(!raw) return false;
-  const backups = JSON.parse(raw);
-  const snapshot = backups[ts];
-  if(!snapshot) return false;
+  const rawObj = await window.__fb.get('trainingslog_backups');
+  if(!rawObj || !rawObj[ts]) return false;
+  const snapshot = JSON.parse(rawObj[ts]);
   const ok = await updateSharedData(current => {
     current.programs = snapshot.programs;
     current.verlauf = snapshot.verlauf;
@@ -1863,8 +1869,12 @@ document.addEventListener('visibilitychange', ()=>{
 });
 
 let updateBannerShown = false;
+const UPDATE_CHECK_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 async function checkForUpdate(){
   if(updateBannerShown) return;
+  const last = parseInt(localStorage.getItem('last_update_check') || '0', 10);
+  if(Date.now() - last < UPDATE_CHECK_INTERVAL_MS) return;
+  localStorage.setItem('last_update_check', String(Date.now()));
   try{
     const res = await fetch(window.location.href, { cache:'no-store' });
     const text = await res.text();
