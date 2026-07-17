@@ -144,7 +144,7 @@
   }
   .week-ring-fill.complete{ stroke:var(--glow-green); }
 
-  /* pulsing light core, sitting behind the glass shell so the glow reads as coming from inside */
+  /* subtle ambient bleed behind the glass, kept faint now that the spark carries the pulse */
   .week-ring-orb-glow{
     position:absolute; inset:14px; border-radius:50%; z-index:0; pointer-events:none;
   }
@@ -152,18 +152,18 @@
     content:''; position:absolute; left:50%; top:50%; width:60%; height:60%;
     border-radius:50%; transform:translate(-50%,-50%) scale(.55);
     background:radial-gradient(circle, var(--accent) 0%, var(--accent) 25%, transparent 72%);
-    filter:blur(3px);
+    filter:blur(4px); opacity:.5;
     animation: orbPulse 2.6s ease-in-out infinite;
   }
   .week-ring-wrap.complete .week-ring-orb-glow::before{
     background:radial-gradient(circle, var(--glow-green) 0%, var(--glow-green) 25%, transparent 72%);
   }
   @keyframes orbPulse{
-    0%, 100%{ opacity:.4; transform:translate(-50%,-50%) scale(.5); }
-    6%{ opacity:1; transform:translate(-50%,-50%) scale(1.15); }
-    12%{ opacity:.55; transform:translate(-50%,-50%) scale(.65); }
-    17%{ opacity:1; transform:translate(-50%,-50%) scale(1.05); }
-    24%{ opacity:.4; transform:translate(-50%,-50%) scale(.5); }
+    0%, 100%{ opacity:.2; transform:translate(-50%,-50%) scale(.5); }
+    6%{ opacity:.5; transform:translate(-50%,-50%) scale(1.15); }
+    12%{ opacity:.28; transform:translate(-50%,-50%) scale(.65); }
+    17%{ opacity:.5; transform:translate(-50%,-50%) scale(1.05); }
+    24%{ opacity:.2; transform:translate(-50%,-50%) scale(.5); }
   }
 
   /* frosted-glass shell wrapping the light core: real backdrop blur + strong highlight/refraction */
@@ -188,8 +188,8 @@
     border-radius:50%; background:radial-gradient(ellipse, rgba(255,255,255,.55), transparent 70%);
     filter:blur(3px); z-index:0;
   }
-  /* smoke: a handful of distinct, organically-shaped wisps that individually drift/curl,
-     illuminated by the pulsing light core underneath */
+  /* smoke: dense, layered, organically-shaped wisps (some light, some shadow) that individually
+     drift/curl at different depths for real volume, illuminated by the flashlight-like spark */
   .week-ring-orb-smoke{
     position:absolute; inset:0; border-radius:50%; overflow:hidden; z-index:1;
     opacity:0; animation:smokeFadeIn 1.6s ease-out forwards;
@@ -197,28 +197,38 @@
     mix-blend-mode:soft-light;
   }
   @keyframes smokeFadeIn{ to{ opacity:1; } }
-  .week-ring-orb-wisp{
-    position:absolute; background:rgba(240,242,248,.6); filter:blur(2px);
-  }
+  .week-ring-orb-wisp{ position:absolute; }
+  .week-ring-orb-wisp.light{ background:rgba(244,246,250,.68); filter:blur(1.8px); }
+  .week-ring-orb-wisp.shadow{ background:rgba(28,30,36,.5); filter:blur(2.4px); }
   .week-ring-orb-wisp.w1{
-    width:48%; height:24%; left:8%; top:36%;
+    width:52%; height:26%; left:6%; top:34%;
     border-radius:60% 40% 55% 45% / 55% 65% 35% 45%;
-    opacity:.6; animation: wispDrift1 8s ease-in-out infinite;
+    opacity:.65; animation: wispDrift1 8s ease-in-out infinite;
   }
   .week-ring-orb-wisp.w2{
-    width:40%; height:20%; left:42%; top:14%;
+    width:42%; height:22%; left:44%; top:10%;
     border-radius:45% 55% 35% 65% / 60% 40% 60% 40%;
-    opacity:.4; animation: wispDrift2 11s ease-in-out infinite;
+    opacity:.5; animation: wispDrift2 11s ease-in-out infinite;
   }
   .week-ring-orb-wisp.w3{
-    width:34%; height:18%; left:18%; top:60%;
+    width:36%; height:20%; left:16%; top:60%;
     border-radius:55% 45% 65% 35% / 40% 60% 40% 60%;
-    opacity:.45; animation: wispDrift3 9.5s ease-in-out infinite reverse;
+    opacity:.55; animation: wispDrift3 9.5s ease-in-out infinite reverse;
   }
   .week-ring-orb-wisp.w4{
-    width:26%; height:15%; left:52%; top:52%;
+    width:28%; height:16%; left:54%; top:50%;
     border-radius:50% 50% 40% 60% / 60% 40% 60% 40%;
-    opacity:.3; animation: wispDrift2 13s ease-in-out infinite reverse;
+    opacity:.4; animation: wispDrift2 13s ease-in-out infinite reverse;
+  }
+  .week-ring-orb-wisp.w5{
+    width:38%; height:22%; left:28%; top:22%;
+    border-radius:40% 60% 55% 45% / 50% 50% 60% 40%;
+    opacity:.4; animation: wispDrift3 15s ease-in-out infinite;
+  }
+  .week-ring-orb-wisp.w6{
+    width:24%; height:14%; left:12%; top:12%;
+    border-radius:60% 40% 45% 55% / 45% 60% 40% 55%;
+    opacity:.3; animation: wispDrift1 12.5s ease-in-out infinite reverse;
   }
   @keyframes wispDrift1{
     0%{ transform:translate(0,0) rotate(0deg) scale(1); }
@@ -239,11 +249,31 @@
     70%{ transform:translate(-6%,9%) rotate(250deg) scale(1.12); }
     100%{ transform:translate(0,0) rotate(360deg) scale(1.05); }
   }
+  /* the flashlight: a small, sharp light source right in the middle of the ball,
+     brightening the smoke around it each time it pulses */
+  .week-ring-orb-spark{
+    position:absolute; left:50%; top:50%; width:26%; height:26%;
+    transform:translate(-50%,-50%) scale(.5);
+    border-radius:50%; z-index:2; mix-blend-mode:screen;
+    background:radial-gradient(circle, #fff 0%, var(--accent) 40%, transparent 75%);
+    filter:blur(1.5px);
+    animation: sparkPulse 2.6s ease-in-out infinite;
+  }
+  .week-ring-wrap.complete .week-ring-orb-spark{
+    background:radial-gradient(circle, #fff 0%, var(--glow-green) 40%, transparent 75%);
+  }
+  @keyframes sparkPulse{
+    0%, 100%{ opacity:.35; transform:translate(-50%,-50%) scale(.4); }
+    6%{ opacity:1; transform:translate(-50%,-50%) scale(1.5); }
+    12%{ opacity:.45; transform:translate(-50%,-50%) scale(.55); }
+    17%{ opacity:1; transform:translate(-50%,-50%) scale(1.3); }
+    24%{ opacity:.35; transform:translate(-50%,-50%) scale(.4); }
+  }
   /* sharp specular glint on top, like light catching curved glass */
   .week-ring-orb::after{
     content:''; position:absolute; top:12%; left:19%; width:24%; height:12%;
     border-radius:50%; background:rgba(255,255,255,.7); filter:blur(2px);
-    transform:rotate(-25deg); z-index:2;
+    transform:rotate(-25deg); z-index:3;
   }
   .week-ring-label{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -1069,7 +1099,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-wisps-v2';
+const APP_BUILD = '2026-07-17-spark-smoke';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2096,11 +2126,14 @@ function renderHome(){
         <div class="week-ring-orb-glow"></div>
         <div class="week-ring-orb" style="--smoke-delay:${RING_FILL_DURATION}ms">
           <div class="week-ring-orb-smoke">
-            <div class="week-ring-orb-wisp w1"></div>
-            <div class="week-ring-orb-wisp w2"></div>
-            <div class="week-ring-orb-wisp w3"></div>
-            <div class="week-ring-orb-wisp w4"></div>
+            <div class="week-ring-orb-wisp light w1"></div>
+            <div class="week-ring-orb-wisp shadow w2"></div>
+            <div class="week-ring-orb-wisp light w3"></div>
+            <div class="week-ring-orb-wisp shadow w4"></div>
+            <div class="week-ring-orb-wisp light w5"></div>
+            <div class="week-ring-orb-wisp shadow w6"></div>
           </div>
+          <div class="week-ring-orb-spark"></div>
         </div>
         <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
       </div>
