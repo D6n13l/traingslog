@@ -170,56 +170,74 @@
   .week-ring-orb{
     position:absolute; inset:14px; border-radius:50%; z-index:1; overflow:hidden;
     background:
-      radial-gradient(circle at 30% 24%, rgba(255,255,255,.5), rgba(255,255,255,.04) 36%, rgba(255,255,255,0) 55%),
-      radial-gradient(circle at 74% 86%, rgba(0,0,0,.14), rgba(0,0,0,0) 60%),
-      linear-gradient(160deg, rgba(255,255,255,.1), rgba(255,255,255,.015) 45%, rgba(255,255,255,.04) 100%);
-    border:1px solid rgba(255,255,255,.22);
+      radial-gradient(circle at 30% 24%, rgba(255,255,255,.55), rgba(255,255,255,.02) 34%, rgba(255,255,255,0) 52%),
+      radial-gradient(circle at 76% 88%, rgba(0,0,0,.08), rgba(0,0,0,0) 62%),
+      linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.008) 45%, rgba(255,255,255,.02) 100%);
+    border:1px solid rgba(255,255,255,.16);
     box-shadow:
-      inset 0 2px 3px rgba(255,255,255,.5),
-      inset 0 -6px 10px rgba(0,0,0,.2),
-      inset 0 0 0 1px rgba(255,255,255,.12),
-      0 2px 5px rgba(0,0,0,.22);
-    backdrop-filter:blur(1.5px) saturate(180%);
-    -webkit-backdrop-filter:blur(1.5px) saturate(180%);
+      inset 0 2px 3px rgba(255,255,255,.55),
+      inset 0 -5px 9px rgba(0,0,0,.14),
+      inset 0 0 0 1.5px rgba(255,255,255,.14),
+      0 2px 5px rgba(0,0,0,.2);
+    backdrop-filter:blur(1px) saturate(210%);
+    -webkit-backdrop-filter:blur(1px) saturate(210%);
   }
   /* soft broad highlight bloom, sits under the smoke for depth */
   .week-ring-orb::before{
     content:''; position:absolute; top:6%; left:14%; width:52%; height:40%;
-    border-radius:50%; background:radial-gradient(ellipse, rgba(255,255,255,.5), transparent 70%);
+    border-radius:50%; background:radial-gradient(ellipse, rgba(255,255,255,.55), transparent 70%);
     filter:blur(3px); z-index:0;
   }
-  /* soft rauch layers, illuminated by the pulsing light core underneath */
+  /* smoke: a handful of distinct, organically-shaped wisps that individually drift/curl,
+     illuminated by the pulsing light core underneath */
   .week-ring-orb-smoke{
     position:absolute; inset:0; border-radius:50%; overflow:hidden; z-index:1;
     opacity:0; animation:smokeFadeIn 1.6s ease-out forwards;
     animation-delay:var(--smoke-delay, 1.8s);
+    mix-blend-mode:soft-light;
   }
   @keyframes smokeFadeIn{ to{ opacity:1; } }
-  .week-ring-orb-smoke-layer{
-    position:absolute; inset:-25%; border-radius:50%;
-    mix-blend-mode:soft-light; filter:blur(4px);
+  .week-ring-orb-wisp{
+    position:absolute; background:rgba(240,242,248,.6); filter:blur(2px);
   }
-  .week-ring-orb-smoke-layer.a{
-    background:
-      radial-gradient(circle at 32% 62%, rgba(255,255,255,.65), transparent 46%),
-      radial-gradient(circle at 68% 32%, rgba(255,255,255,.4), transparent 44%);
-    animation: smokeSpinA 17s linear infinite;
+  .week-ring-orb-wisp.w1{
+    width:48%; height:24%; left:8%; top:36%;
+    border-radius:60% 40% 55% 45% / 55% 65% 35% 45%;
+    opacity:.6; animation: wispDrift1 8s ease-in-out infinite;
   }
-  .week-ring-orb-smoke-layer.b{
-    background:
-      radial-gradient(circle at 55% 72%, rgba(255,255,255,.45), transparent 50%),
-      radial-gradient(circle at 24% 22%, rgba(255,255,255,.3), transparent 52%);
-    animation: smokeSpinB 23s linear infinite reverse;
+  .week-ring-orb-wisp.w2{
+    width:40%; height:20%; left:42%; top:14%;
+    border-radius:45% 55% 35% 65% / 60% 40% 60% 40%;
+    opacity:.4; animation: wispDrift2 11s ease-in-out infinite;
   }
-  @keyframes smokeSpinA{
-    0%{ transform:rotate(0deg) scale(1); }
-    50%{ transform:rotate(180deg) scale(1.18); }
-    100%{ transform:rotate(360deg) scale(1); }
+  .week-ring-orb-wisp.w3{
+    width:34%; height:18%; left:18%; top:60%;
+    border-radius:55% 45% 65% 35% / 40% 60% 40% 60%;
+    opacity:.45; animation: wispDrift3 9.5s ease-in-out infinite reverse;
   }
-  @keyframes smokeSpinB{
-    0%{ transform:rotate(0deg) scale(1.12); }
-    50%{ transform:rotate(-180deg) scale(.94); }
-    100%{ transform:rotate(-360deg) scale(1.12); }
+  .week-ring-orb-wisp.w4{
+    width:26%; height:15%; left:52%; top:52%;
+    border-radius:50% 50% 40% 60% / 60% 40% 60% 40%;
+    opacity:.3; animation: wispDrift2 13s ease-in-out infinite reverse;
+  }
+  @keyframes wispDrift1{
+    0%{ transform:translate(0,0) rotate(0deg) scale(1); }
+    25%{ transform:translate(14%,-10%) rotate(70deg) scale(1.15); }
+    50%{ transform:translate(4%,-18%) rotate(150deg) scale(.88); }
+    75%{ transform:translate(-11%,-4%) rotate(240deg) scale(1.08); }
+    100%{ transform:translate(0,0) rotate(360deg) scale(1); }
+  }
+  @keyframes wispDrift2{
+    0%{ transform:translate(0,0) rotate(0deg) scale(1); }
+    33%{ transform:translate(-10%,12%) rotate(-100deg) scale(1.12); }
+    66%{ transform:translate(8%,5%) rotate(-220deg) scale(.9); }
+    100%{ transform:translate(0,0) rotate(-360deg) scale(1); }
+  }
+  @keyframes wispDrift3{
+    0%{ transform:translate(0,0) rotate(0deg) scale(1.05); }
+    40%{ transform:translate(10%,-8%) rotate(130deg) scale(.92); }
+    70%{ transform:translate(-6%,9%) rotate(250deg) scale(1.12); }
+    100%{ transform:translate(0,0) rotate(360deg) scale(1.05); }
   }
   /* sharp specular glint on top, like light catching curved glass */
   .week-ring-orb::after{
@@ -1051,7 +1069,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-smoke-echo';
+const APP_BUILD = '2026-07-17-wisps-v2';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -1890,7 +1908,7 @@ function triggerHomeRipple(){
       echo.style.borderColor = waveColor;
       document.body.appendChild(echo);
       echo.addEventListener('animationend', ()=>echo.remove());
-    }, 160);
+    }, 380);
 
     // 3) content warp: an actual expanding-circle displacement map grows in sync
     // with the visible wave, so the distortion genuinely travels outward as a ring
@@ -2078,8 +2096,10 @@ function renderHome(){
         <div class="week-ring-orb-glow"></div>
         <div class="week-ring-orb" style="--smoke-delay:${RING_FILL_DURATION}ms">
           <div class="week-ring-orb-smoke">
-            <div class="week-ring-orb-smoke-layer a"></div>
-            <div class="week-ring-orb-smoke-layer b"></div>
+            <div class="week-ring-orb-wisp w1"></div>
+            <div class="week-ring-orb-wisp w2"></div>
+            <div class="week-ring-orb-wisp w3"></div>
+            <div class="week-ring-orb-wisp w4"></div>
           </div>
         </div>
         <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
