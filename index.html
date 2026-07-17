@@ -154,13 +154,13 @@
   .week-ring-orb{
     position:absolute; inset:13px; border-radius:50%; z-index:1; overflow:hidden;
     background:
-      radial-gradient(circle at 50% 50%, rgba(255,255,255,.03), rgba(255,255,255,.01) 70%, rgba(0,0,0,.06) 100%);
+      radial-gradient(circle at 50% 42%, rgba(255,255,255,.02), rgba(0,0,0,.10) 65%, rgba(0,0,0,.22) 100%);
     box-shadow:
       inset 0 5px 11px rgba(0,0,0,.22),
       0 3px 8px rgba(0,0,0,.4),
       0 1px 2px rgba(0,0,0,.3);
-    backdrop-filter:blur(.5px) saturate(190%) brightness(1.04);
-    -webkit-backdrop-filter:blur(.5px) saturate(190%) brightness(1.04);
+    backdrop-filter:blur(.5px) saturate(150%) brightness(.92);
+    -webkit-backdrop-filter:blur(.5px) saturate(150%) brightness(.92);
   }
 
   /* --- smoke: real fractal-noise density, drifting and slowly filling the sphere --- */
@@ -214,44 +214,53 @@
     100%{ transform:translate3d(4%, -3%, 0) rotate(-360deg) scale(1.16); }
   }
 
-  /* --- flashlight core: sharp centre light, double-beat heartbeat --- */
+  /* --- lightning: a strike inside the cloud. It is deliberately large and uses screen
+         blending, so it lights up the cloud's own billows rather than sitting on top of
+         them as a glowing dot. Real lightning rises almost instantly and decays slower,
+         hence the linear timing and the near-vertical jump in the keyframes. --- */
   .week-ring-orb-spark{
-    position:absolute; left:50%; top:50%; width:30%; height:30%;
+    position:absolute; left:50%; top:50%; width:118%; height:118%;
+    transform:translate(-50%,-50%) scale(.82);
     border-radius:50%; z-index:2; pointer-events:none;
     mix-blend-mode:screen;
-    background:radial-gradient(circle, #fff 0%, #fff 18%, var(--accent) 42%, rgba(232,54,43,.35) 62%, transparent 78%);
-    filter:blur(1.2px);
-    transform:translate(-50%,-50%) scale(.45);
-    animation: sparkHeartbeat 1.7s ease-out infinite;
+    background:radial-gradient(circle at 50% 47%,
+      #ffffff 0%, #fff4f0 5%, var(--accent) 19%,
+      rgba(232,54,43,.5) 38%, rgba(232,54,43,.16) 58%, transparent 76%);
+    filter:blur(2px);
+    opacity:0;
+    animation: sparkHeartbeat 1.7s linear infinite;
   }
   .week-ring-wrap.complete .week-ring-orb-spark{
-    background:radial-gradient(circle, #fff 0%, #fff 18%, var(--glow-green) 42%, rgba(57,217,122,.35) 62%, transparent 78%);
+    background:radial-gradient(circle at 50% 47%,
+      #ffffff 0%, #f0fff6 5%, var(--glow-green) 19%,
+      rgba(57,217,122,.5) 38%, rgba(57,217,122,.16) 58%, transparent 76%);
   }
-  /* lub ... dub ... rest */
+  /* strike ... flicker ... dark */
   @keyframes sparkHeartbeat{
-    0%{    opacity:.22; transform:translate(-50%,-50%) scale(.45); }
-    7%{    opacity:1;   transform:translate(-50%,-50%) scale(1.5); }
-    16%{   opacity:.3;  transform:translate(-50%,-50%) scale(.55); }
-    24%{   opacity:.8;  transform:translate(-50%,-50%) scale(1.15); }
-    34%{   opacity:.22; transform:translate(-50%,-50%) scale(.45); }
-    100%{  opacity:.22; transform:translate(-50%,-50%) scale(.45); }
+    0%{    opacity:.06; transform:translate(-50%,-50%) scale(.8); }
+    2%{    opacity:1;   transform:translate(-50%,-50%) scale(1.02); }
+    7%{    opacity:.14; transform:translate(-50%,-50%) scale(.86); }
+    10%{   opacity:.72; transform:translate(-50%,-50%) scale(.98); }
+    17%{   opacity:.07; transform:translate(-50%,-50%) scale(.8); }
+    100%{  opacity:.06; transform:translate(-50%,-50%) scale(.8); }
   }
-  /* the ring itself echoes the same heartbeat, very subtly */
+  /* light escaping the ball, on the same strike rhythm */
   .week-ring-orb-glow{
     position:absolute; inset:13px; border-radius:50%; z-index:0; pointer-events:none;
     background:radial-gradient(circle, var(--accent) 0%, transparent 62%);
-    filter:blur(6px); opacity:.12;
-    animation: glowHeartbeat 1.7s ease-out infinite;
+    filter:blur(7px); opacity:.05;
+    animation: glowHeartbeat 1.7s linear infinite;
   }
   .week-ring-wrap.complete .week-ring-orb-glow{
     background:radial-gradient(circle, var(--glow-green) 0%, transparent 62%);
   }
   @keyframes glowHeartbeat{
-    0%{ opacity:.1; transform:scale(.9); }
-    7%{ opacity:.42; transform:scale(1.06); }
-    16%{ opacity:.14; transform:scale(.94); }
-    24%{ opacity:.32; transform:scale(1.02); }
-    34%, 100%{ opacity:.1; transform:scale(.9); }
+    0%{ opacity:.04; transform:scale(.9); }
+    2%{ opacity:.5; transform:scale(1.1); }
+    7%{ opacity:.07; transform:scale(.94); }
+    10%{ opacity:.34; transform:scale(1.04); }
+    17%{ opacity:.04; transform:scale(.9); }
+    100%{ opacity:.04; transform:scale(.9); }
   }
 
   /* --- glass surface, painted over everything inside --- */
@@ -684,8 +693,8 @@
   @media (prefers-reduced-motion: reduce){
     .week-ring-orb-smoke{ opacity:.9; }
     .orb-smoke-grow{ transform:scale(1); }
-    .week-ring-orb-spark{ opacity:.5; transform:translate(-50%,-50%) scale(1); }
-    .week-ring-orb-glow{ opacity:.15; }
+    .week-ring-orb-spark{ opacity:.22; transform:translate(-50%,-50%) scale(.85); }
+    .week-ring-orb-glow{ opacity:.08; }
   }
 </style>
 </head>
@@ -709,9 +718,10 @@
     </feDisplacementMap>
   </filter>
 
-  <!-- Volumetric white smoke: fractal noise carved into wispy density by the alpha row
-       (alpha = 2.4*R - 0.66), which turns mid-grey noise into billows with real gaps.
-       Few octaves + generous blur keep it billowy; more octaves read as grain, not smoke.
+  <!-- Storm cloud: fractal noise carved into billows by the alpha row (alpha = 2.6*R - 0.72).
+       The RGB constants make the mass a cold, dark blue-grey - it must sit DARK so the
+       lightning has something to light up. Layer B is darker still, giving the cloud a
+       heavy underside. Few octaves + generous blur keep it billowy; more reads as grain.
        NOTE: baseFrequency is deliberately NOT animated. Animating it forces the browser to
        regenerate the noise every single frame, which is a heavy repaint on phones and would
        run for as long as the app is open. Keeping it static lets the texture be rasterised
@@ -719,20 +729,20 @@
   <filter id="orbSmokeA" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
     <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="3" seed="11" result="t"/>
     <feColorMatrix in="t" type="matrix" result="s"
-      values="0 0 0 0 1
-              0 0 0 0 1
-              0 0 0 0 1
-              2.4 0 0 0 -0.66"/>
-    <feGaussianBlur in="s" stdDeviation="1.5"/>
+      values="0 0 0 0 0.29
+              0 0 0 0 0.31
+              0 0 0 0 0.38
+              2.6 0 0 0 -0.70"/>
+    <feGaussianBlur in="s" stdDeviation="1.4"/>
   </filter>
   <filter id="orbSmokeB" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
     <feTurbulence type="fractalNoise" baseFrequency="0.027" numOctaves="2" seed="29" result="t"/>
     <feColorMatrix in="t" type="matrix" result="s"
-      values="0 0 0 0 1
-              0 0 0 0 1
-              0 0 0 0 1
-              2.2 0 0 0 -0.72"/>
-    <feGaussianBlur in="s" stdDeviation="2"/>
+      values="0 0 0 0 0.13
+              0 0 0 0 0.14
+              0 0 0 0 0.20
+              2.3 0 0 0 -0.70"/>
+    <feGaussianBlur in="s" stdDeviation="2.2"/>
   </filter>
 </svg>
 
@@ -1132,7 +1142,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-glassorb-smoke';
+const APP_BUILD = '2026-07-17-thundercloud';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
