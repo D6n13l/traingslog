@@ -435,20 +435,35 @@
   .progress-chart-wrap{margin:4px -4px 8px;}
   .progress-point-label{font-family:'IBM Plex Mono',monospace; font-size:9.5px; fill:var(--text-3);}
   .progress-axis-label{font-family:'IBM Plex Mono',monospace; font-size:10px; fill:var(--text-3);}
-  .history-entry{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; position:relative;}
-  .history-actions{position:absolute; top:10px; right:10px; display:flex; gap:6px;}
+  .history-entry{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; position:relative; overflow:hidden;}
+  .history-actions{position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:2;}
   .history-edit, .history-del{
     width:24px; height:24px; border-radius:50%;
     background:var(--surface-2); border:none; color:var(--text-3); font-size:12px;
     display:flex; align-items:center; justify-content:center; cursor:pointer;
   }
   .history-edit:active, .history-del:active{background:var(--surface-3);}
-  .history-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+  .history-summary{padding:14px; cursor:pointer; position:relative;}
+  .history-summary:active{background:var(--surface-2);}
+  .history-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; padding-right:60px;}
   .history-day{font-family:'Oswald',sans-serif; font-weight:700; font-size:14.5px;}
   .history-meta{font-size:11.5px; color:var(--text-3); font-family:'IBM Plex Mono',monospace;}
   .history-user{display:inline-block; font-size:11.5px; font-weight:700; color:var(--accent); background:var(--accent-soft); padding:2px 9px; border-radius:999px; margin-bottom:6px;}
   .history-program{font-size:11px; color:var(--text-3); margin-bottom:2px;}
-  .history-exlist{font-size:12.5px; color:var(--text-2); line-height:1.6;}
+  .history-chevron{
+    position:absolute; right:14px; bottom:14px; color:var(--text-3); font-size:18px;
+    transition:transform .2s ease;
+  }
+  .history-entry.expanded .history-chevron{transform:rotate(90deg);}
+  .history-detail{padding:0 14px 14px; border-top:1px solid var(--border);}
+  .history-detail-ex{padding-top:12px;}
+  .history-detail-exname{font-size:12.5px; font-weight:600; color:var(--text); margin-bottom:6px;}
+  .history-detail-sets{display:flex; flex-wrap:wrap; gap:6px;}
+  .history-detail-set{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-2);
+    background:var(--surface-2); padding:5px 10px; border-radius:999px;
+  }
+  .history-detail-empty{padding-top:12px; font-size:12.5px; color:var(--text-3);}
   .empty-state{text-align:center; padding:60px 20px; color:var(--text-3); font-size:13.5px;}
 
   /* ---------- Builder ---------- */
@@ -946,7 +961,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-16-ripple4';
+const APP_BUILD = '2026-07-16-histcollapse';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2661,30 +2676,48 @@ function renderHistory(){
     const d = new Date(entry.date);
     const dateStr = d.toLocaleDateString(LOCALE_MAP[appLang], {day:'2-digit', month:'2-digit', year:'2-digit'});
     const timeStr = d.toLocaleTimeString(LOCALE_MAP[appLang], {hour:'2-digit', minute:'2-digit'});
-    const exSummary = entry.exercises
-      .filter(e=>e.sets.some(s=>s.done || s.weight))
-      .map(e=>{
-        const setStrs = e.sets.filter(s=>s.weight).map(s=> s.reps ? `${s.weight}×${s.reps}` : `${s.weight}`);
-        return `${e.name}${setStrs.length ? ' — ' + setStrs.join('/') + ' kg' : ''}`;
-      }).join(' · ');
-    html += `<div class="history-entry">
+    const exWithData = entry.exercises.filter(e=>e.sets.some(s=>s.done || s.weight));
+    const detailHtml = exWithData.length ? exWithData.map(e=>{
+      const setChips = e.sets
+        .map((s,i)=> s.weight ? `<span class="history-detail-set">${s.weight} kg${s.reps ? ' × '+s.reps : ''}</span>` : '')
+        .filter(Boolean).join('');
+      return `<div class="history-detail-ex">
+        <div class="history-detail-exname">${e.name}</div>
+        <div class="history-detail-sets">${setChips}</div>
+      </div>`;
+    }).join('') : `<div class="history-detail-empty">${t('history_no_details')}</div>`;
+
+    html += `<div class="history-entry" data-entryid="${entry.id}">
       ${entry.user === currentUser ? `<div class="history-actions">
         <button class="history-edit" data-edithistory="${entry.id}" title="${t('edit_title')}">✎</button>
         <button class="history-del" data-delhistory="${entry.id}" title="${t('delete_title')}">×</button>
       </div>` : ''}
-      <span class="history-user">${entry.user}</span>
-      <div class="history-program">${entry.programName || ''}</div>
-      <div class="history-top">
-        <div class="history-day">${entry.dayLabel}</div>
-        <div class="history-meta">${dateStr} · ${timeStr}</div>
+      <div class="history-summary" data-entrytoggle="${entry.id}">
+        <span class="history-user">${entry.user}</span>
+        <div class="history-program">${entry.programName || ''}</div>
+        <div class="history-top">
+          <div class="history-day">${entry.dayLabel}</div>
+          <div class="history-meta">${dateStr} · ${timeStr}</div>
+        </div>
+        <div class="history-meta">${entry.doneCount}/${entry.totalCount} ${t('sets_done_label')}${entry.durationMin ? ' · ' + entry.durationMin + ' ' + t('min_label') : ''}</div>
+        <div class="history-chevron">›</div>
       </div>
-      <div class="history-meta" style="margin-bottom:6px;">${entry.doneCount}/${entry.totalCount} ${t('sets_done_label')}${entry.durationMin ? ' · ' + entry.durationMin + ' ' + t('min_label') : ''}</div>
-      <div class="history-exlist">${exSummary || t('history_no_details')}</div>
+      <div class="history-detail" id="histdetail-${entry.id}" style="display:none;">${detailHtml}</div>
     </div>`;
   });
   main.innerHTML = html;
   wireHistoryFilterChips(main);
 
+  main.querySelectorAll('[data-entrytoggle]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const id = el.dataset.entrytoggle;
+      const card = el.closest('.history-entry');
+      const detail = document.getElementById('histdetail-' + id);
+      const isOpen = detail.style.display !== 'none';
+      detail.style.display = isOpen ? 'none' : 'block';
+      card.classList.toggle('expanded', !isOpen);
+    });
+  });
   main.querySelectorAll('[data-edithistory]').forEach(btn=>{
     btn.addEventListener('click', (e)=>{
       e.stopPropagation();
