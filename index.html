@@ -122,33 +122,63 @@
     padding:16px; margin-bottom:18px;
   }
   .week-card-main{display:flex; align-items:center; gap:16px;}
-  .week-ring-wrap{position:relative; width:84px; height:84px; flex-shrink:0;}
-  .week-ring-wrap::before{
-    content:''; position:absolute; inset:-20px; border-radius:50%;
-    background:radial-gradient(circle, var(--accent) 0%, transparent 60%);
-    filter:blur(20px); opacity:.2; z-index:0;
-    animation: ringGlowPulse 2.3s ease-in-out infinite;
+  .week-ring-wrap{
+    position:relative; width:84px; height:84px; flex-shrink:0;
+    filter:drop-shadow(0 10px 16px rgba(0,0,0,.4));
   }
-  .week-ring-wrap.complete::before{ background:radial-gradient(circle, var(--glow-green) 0%, transparent 60%); }
+  .week-ring-wrap::before{
+    content:''; position:absolute; inset:-22px; border-radius:50%;
+    background:radial-gradient(circle, var(--accent) 0%, transparent 62%);
+    filter:blur(18px); opacity:.22; z-index:0;
+    animation: ringGlowPulse 2.6s ease-in-out infinite;
+  }
+  .week-ring-wrap.complete::before{ background:radial-gradient(circle, var(--glow-green) 0%, transparent 62%); }
   @keyframes ringGlowPulse{
-    0%{ opacity:.2; transform:scale(.9); }
-    4%{ opacity:.55; transform:scale(1.08); }
-    9%{ opacity:.2; transform:scale(.9); }
-    13%{ opacity:.55; transform:scale(1.08); }
-    18%, 100%{ opacity:.2; transform:scale(.9); }
+    0%, 100%{ opacity:.22; transform:scale(.92); }
+    6%{ opacity:.65; transform:scale(1.14); }
+    12%{ opacity:.3; transform:scale(.98); }
+    17%{ opacity:.6; transform:scale(1.1); }
+    24%{ opacity:.22; transform:scale(.92); }
+  }
+  /* frosted-glass disc behind the ring */
+  .week-ring-wrap::after{
+    content:''; position:absolute; inset:2px; border-radius:50%; z-index:0;
+    background:
+      radial-gradient(circle at 30% 22%, rgba(255,255,255,.28), rgba(255,255,255,0) 45%),
+      linear-gradient(155deg, rgba(255,255,255,.10), rgba(255,255,255,.02) 45%, rgba(0,0,0,.16) 100%);
+    border:1px solid rgba(255,255,255,.16);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,.35),
+      inset 0 -8px 14px rgba(0,0,0,.4),
+      inset 0 0 0 1px rgba(0,0,0,.1);
+    backdrop-filter:blur(8px) saturate(150%);
+    -webkit-backdrop-filter:blur(8px) saturate(150%);
   }
   .week-ring, .week-ring-label{position:relative; z-index:1;}
   .week-ring{width:100%; height:100%; transform:rotate(-90deg);}
-  .week-ring-track{fill:none; stroke:var(--surface-2); stroke-width:8;}
+  .week-ring-track{fill:none; stroke:rgba(255,255,255,.07); stroke-width:8;}
   .week-ring-fill{
-    fill:none; stroke:var(--accent); stroke-width:8; stroke-linecap:round;
+    fill:none; stroke:url(#weekRingGrad); stroke-width:8; stroke-linecap:round;
     stroke-dasharray:264; stroke-dashoffset:264;
-    filter:drop-shadow(0 0 6px var(--accent)); transition:stroke .3s, filter .3s;
+    filter:drop-shadow(0 0 7px var(--accent-soft-2)) drop-shadow(0 0 2px rgba(255,255,255,.55));
+    transition:filter .3s;
   }
-  .week-ring-fill.complete{ stroke:var(--glow-green); filter:drop-shadow(0 0 6px var(--glow-green)); }
+  .week-ring-fill.complete{
+    stroke:url(#weekRingGradComplete);
+    filter:drop-shadow(0 0 7px rgba(57,217,122,.55)) drop-shadow(0 0 2px rgba(255,255,255,.55));
+  }
+  /* glossy specular highlight arc, independent of the ring's own rotation */
+  .week-ring-shine{
+    position:absolute; inset:2px; border-radius:50%; z-index:2; pointer-events:none;
+    background:conic-gradient(from -40deg at 50% 50%, rgba(255,255,255,.5), rgba(255,255,255,0) 28%, rgba(255,255,255,0) 100%);
+    mix-blend-mode:overlay; opacity:.8;
+    -webkit-mask:radial-gradient(circle, transparent 58%, #000 60%, #000 78%, transparent 80%);
+    mask:radial-gradient(circle, transparent 58%, #000 60%, #000 78%, transparent 80%);
+  }
   .week-ring-label{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     font-family:'Oswald',sans-serif; font-weight:700; font-size:15px;
+    text-shadow:0 1px 3px rgba(0,0,0,.5); z-index:3;
   }
   .week-card-info{flex:1; min-width:0;}
   .week-card-label{font-size:12px; color:var(--text-2); font-weight:600; letter-spacing:.02em; margin-bottom:6px;}
@@ -969,7 +999,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-16-bandwidth';
+const APP_BUILD = '2026-07-17-glassring';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -1977,9 +2007,22 @@ function renderHome(){
     <div class="week-card-main">
       <div class="week-ring-wrap${pct >= 100 ? ' complete' : ''}">
         <svg class="week-ring" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="weekRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FF6A54"/>
+              <stop offset="55%" stop-color="var(--accent)"/>
+              <stop offset="100%" stop-color="var(--accent-strong)"/>
+            </linearGradient>
+            <linearGradient id="weekRingGradComplete" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#7CFFB2"/>
+              <stop offset="55%" stop-color="var(--glow-green)"/>
+              <stop offset="100%" stop-color="#1FAE60"/>
+            </linearGradient>
+          </defs>
           <circle class="week-ring-track" cx="50" cy="50" r="42"/>
           <circle class="week-ring-fill${pct >= 100 ? ' complete' : ''}" cx="50" cy="50" r="42" data-target-pct="${pct}"/>
         </svg>
+        <div class="week-ring-shine"></div>
         <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
       </div>
       <div class="week-card-info">
