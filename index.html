@@ -158,7 +158,7 @@
   .week-secondary{font-size:11.5px; color:var(--text-3);}
   .program-card{
     background:var(--surface); border:1px solid rgba(255,255,255,.5); border-radius:var(--radius);
-    padding:18px 16px; margin-bottom:12px; position:relative; cursor:pointer;
+    padding:18px 16px 18px 52px; margin-bottom:12px; position:relative; cursor:pointer;
     display:flex; align-items:center; justify-content:space-between; gap:12px;
   }
   .program-card:active{background:var(--surface-2);}
@@ -168,6 +168,14 @@
   .program-info span{font-size:12.5px; color:var(--text-2);}
   .program-arrow{color:var(--text-3); font-size:20px; flex-shrink:0;}
   .program-actions{position:absolute; top:10px; right:10px; display:flex; gap:6px;}
+  .program-reorder{position:absolute; top:50%; left:10px; transform:translateY(-50%); display:flex; flex-direction:column; gap:4px;}
+  .reorder-btn{
+    width:28px; height:22px; border-radius:6px;
+    background:var(--surface-2); border:none; color:var(--text-2); font-size:10px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .reorder-btn:active{background:var(--surface-3);}
+  .reorder-btn:disabled{opacity:.25; cursor:default;}
   .program-edit, .program-del{
     width:26px; height:26px; border-radius:50%;
     background:var(--surface-2); border:none; color:var(--text-3); font-size:13px;
@@ -961,7 +969,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-16-histcollapse';
+const APP_BUILD = '2026-07-16-reorder';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -1977,9 +1985,14 @@ function renderHome(){
 
   html += `<div class="home-question">${t('home_question')}</div>`;
 
-  sharedData.programs.forEach(rawP=>{
+  sharedData.programs.forEach((rawP, idx)=>{
     const p = localizeProgram(rawP);
+    const total = sharedData.programs.length;
     html += `<div class="program-card" data-program="${p.id}">
+      <div class="program-reorder">
+        <button class="reorder-btn" data-moveup="${p.id}" ${idx===0?'disabled':''}>▲</button>
+        <button class="reorder-btn" data-movedown="${p.id}" ${idx===total-1?'disabled':''}>▼</button>
+      </div>
       <div class="program-actions">
         <button class="program-edit" data-editprogram="${p.id}" title="${t('edit_title')}">✎</button>
         ${!p.builtIn ? `<button class="program-del" data-delprogram="${p.id}" title="${t('delete_title')}">×</button>` : ''}
@@ -2000,8 +2013,34 @@ function renderHome(){
 
   document.querySelectorAll('.program-card').forEach(card=>{
     card.addEventListener('click', (e)=>{
-      if(e.target.closest('.program-actions')) return;
+      if(e.target.closest('.program-actions') || e.target.closest('.program-reorder')) return;
       openProgram(card.dataset.program);
+    });
+  });
+  document.querySelectorAll('[data-moveup]').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const id = btn.dataset.moveup;
+      await updateSharedData(current=>{
+        const idx = current.programs.findIndex(p=>p.id===id);
+        if(idx > 0){
+          [current.programs[idx-1], current.programs[idx]] = [current.programs[idx], current.programs[idx-1]];
+        }
+      });
+      renderHome();
+    });
+  });
+  document.querySelectorAll('[data-movedown]').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const id = btn.dataset.movedown;
+      await updateSharedData(current=>{
+        const idx = current.programs.findIndex(p=>p.id===id);
+        if(idx > -1 && idx < current.programs.length-1){
+          [current.programs[idx], current.programs[idx+1]] = [current.programs[idx+1], current.programs[idx]];
+        }
+      });
+      renderHome();
     });
   });
   document.querySelectorAll('[data-delprogram]').forEach(btn=>{
