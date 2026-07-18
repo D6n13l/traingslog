@@ -166,102 +166,105 @@
     -webkit-backdrop-filter:contrast(120%) brightness(.72);
   }
 
-  /* --- Plasma globe: several filaments permanently arc from the centre electrode out to
-         the glass, jittering constantly. This is a 2000s plasma ball, so the light is
-         always on and only surges brighter on the "touch" pulse. Purple/magenta is the
-         classic noble-gas glow. --- */
-  :root{ --plasma:#b060ff; --plasma-hot:#e9c8ff; --plasma-deep:#6a1fd0; }
+  /* --- Black hole: a glowing accretion disc spirals into a dark core. Light only comes
+         from the disc (matter heated as it falls in); the centre is genuine void. On the
+         pulse everything is dragged inward and the disc flares - like a burst of infall. --- */
+  :root{ --disc:#ff8a1e; --disc-hot:#fff2c4; --disc-deep:#c42a6b; }
 
   .orb-bolts{
     position:absolute; inset:0; width:100%; height:100%; z-index:2;
     pointer-events:none; overflow:visible;
-    animation: plasmaSurge 3.1s ease-in-out infinite;
+    animation: holePulse 3.4s ease-in-out infinite;
   }
-  /* the whole filament cage drifts around so the arcs never look static */
+  /* the disc rotates continuously - this is the orbital motion of the infalling matter */
   .orb-bolts-spin{
     width:100%; height:100%; transform-origin:50% 50%;
-    animation: plasmaTurn 26s linear infinite;
+    animation: discSpin 14s linear infinite;
   }
-  @keyframes plasmaTurn{ to{ transform:rotate(360deg); } }
+  @keyframes discSpin{ to{ transform:rotate(360deg); } }
 
-  /* global brightness/scale surge = the "aufpulsieren" */
-  @keyframes plasmaSurge{
-    0%,100%{ opacity:.82; filter:brightness(.9); }
-    50%{     opacity:1;   filter:brightness(1.45); }
+  /* pulse: the whole disc is pulled inward (scale down) and flares brighter, then relaxes */
+  @keyframes holePulse{
+    0%,100%{ transform:scale(1);    filter:brightness(.92) saturate(1); }
+    50%{     transform:scale(.9);  filter:brightness(1.5) saturate(1.25); }
   }
 
-  .fil{ transform-origin:50% 50%; }
-  .fil .halo path{
-    fill:none; stroke:var(--plasma); stroke-width:2.4;
+  .arm .halo path{
+    fill:none; stroke:var(--disc); stroke-width:2.6;
     stroke-linecap:round; stroke-linejoin:round;
   }
-  .fil .core path{
-    fill:none; stroke:var(--plasma-hot); stroke-width:.7;
+  .arm .core path{
+    fill:none; stroke:var(--disc-hot); stroke-width:.8;
     stroke-linecap:round; stroke-linejoin:round;
   }
-  /* each filament writhes at its own speed - tiny rotations about the centre make the
-     tips skate along the glass the way real plasma arcs do */
-  .fil.f0{ animation: filWrithe0 2.3s ease-in-out infinite; }
-  .fil.f1{ animation: filWrithe1 2.9s ease-in-out infinite; }
-  .fil.f2{ animation: filWrithe2 2.6s ease-in-out infinite; }
-  .fil.f3{ animation: filWrithe0 3.2s ease-in-out infinite reverse; }
-  .fil.f4{ animation: filWrithe1 2.1s ease-in-out infinite reverse; }
-  .fil.f5{ animation: filWrithe2 3.5s ease-in-out infinite; }
-  @keyframes filWrithe0{ 0%,100%{ transform:rotate(-3deg); } 50%{ transform:rotate(3.5deg); } }
-  @keyframes filWrithe1{ 0%,100%{ transform:rotate(2.5deg); } 50%{ transform:rotate(-4deg); } }
-  @keyframes filWrithe2{ 0%,100%{ transform:rotate(-2deg); } 33%{ transform:rotate(3deg); } 66%{ transform:rotate(-3.5deg); } }
+  /* inner arms burn hotter (deeper in the gravity well) */
+  .arm .core path{ stroke:var(--disc-hot); }
 
-  /* the centre electrode: a hot bright ball the filaments spring from */
+  /* the event horizon: a pure black core, ringed by a razor-thin, very bright PHOTON RING
+     where light orbits the hole before falling in. That bright ring hugging pure black is
+     the single strongest "this is a black hole" cue (the Interstellar / EHT look). */
   .week-ring-orb-spark{
-    position:absolute; left:50%; top:50%; width:34%; height:34%;
+    position:absolute; left:50%; top:50%; width:52%; height:52%;
     transform:translate(-50%,-50%);
     border-radius:50%; z-index:3; pointer-events:none;
-    mix-blend-mode:screen;
-    background:radial-gradient(circle,
-      #fff 0%, var(--plasma-hot) 26%, var(--plasma) 52%, rgba(176,96,255,.28) 72%, transparent 84%);
-    filter:blur(1px);
-    animation: electrode 3.1s ease-in-out infinite;
+    background:
+      radial-gradient(circle,
+        #000 0%, #000 30%,
+        rgba(0,0,0,.98) 33%,
+        var(--disc-hot) 35%, #fff 37%, var(--disc-hot) 40%,
+        var(--disc) 46%, rgba(255,138,30,.4) 55%, transparent 70%);
+    box-shadow:0 0 8px 1px rgba(255,138,30,.5);
+    animation: horizon 3.4s ease-in-out infinite;
   }
   .week-ring-wrap.complete .week-ring-orb-spark{
-    background:radial-gradient(circle,
-      #fff 0%, #d8ffe8 26%, var(--glow-green) 52%, rgba(57,217,122,.28) 72%, transparent 84%);
+    background:
+      radial-gradient(circle,
+        #000 0%, #000 30%,
+        rgba(0,0,0,.98) 33%,
+        #d8ffe8 35%, #fff 37%, #d8ffe8 40%,
+        var(--glow-green) 46%, rgba(57,217,122,.4) 55%, transparent 70%);
+    box-shadow:0 0 8px 1px rgba(57,217,122,.5);
   }
-  @keyframes electrode{
-    0%,100%{ opacity:.85; transform:translate(-50%,-50%) scale(.9); }
-    50%{     opacity:1;   transform:translate(-50%,-50%) scale(1.12); }
+  @keyframes horizon{
+    0%,100%{ transform:translate(-50%,-50%) scale(1);   filter:brightness(1); }
+    50%{     transform:translate(-50%,-50%) scale(.9);  filter:brightness(1.35); }
   }
 
-  /* ambient plasma haze that fills the whole globe, breathing with the surge */
+  /* faint accretion glow filling the disc plane, breathing with the pulse */
   .week-ring-orb-glow{
     position:absolute; inset:13px; border-radius:50%; z-index:0; pointer-events:none;
-    background:radial-gradient(circle, rgba(176,96,255,.5) 0%, rgba(106,31,208,.18) 45%, transparent 72%);
-    animation: plasmaHaze 3.1s ease-in-out infinite;
+    background:radial-gradient(circle,
+      transparent 0%, transparent 20%,
+      rgba(255,138,30,.32) 40%, rgba(196,42,107,.2) 62%, transparent 80%);
+    animation: discGlow 3.4s ease-in-out infinite;
   }
   .week-ring-wrap.complete .week-ring-orb-glow{
-    background:radial-gradient(circle, rgba(57,217,122,.5) 0%, rgba(31,174,96,.18) 45%, transparent 72%);
+    background:radial-gradient(circle,
+      transparent 0%, transparent 20%,
+      rgba(57,217,122,.32) 40%, rgba(31,174,96,.2) 62%, transparent 80%);
   }
-  @keyframes plasmaHaze{
-    0%,100%{ opacity:.4; }
-    50%{     opacity:.72; }
+  @keyframes discGlow{
+    0%,100%{ opacity:.5; }
+    50%{     opacity:.85; }
   }
 
-  /* The shell, lit from within by the ever-present plasma. Always faintly visible now
-     (the globe is never dark), breathing brighter on the surge. Still no outside light. */
+  /* The glass shell, lit only from within by the accretion disc. Breathes with the pulse.
+     No outside light: no specular, no bright-from-above rim - just the inner glow. */
   .week-ring-orb::after{
     content:''; position:absolute; inset:0; border-radius:50%; z-index:4; pointer-events:none;
     box-shadow:
-      inset 0 0 0 1px rgba(224,196,255,.4),
-      inset 0 0 9px 1px rgba(176,96,255,.4);
-    animation: shellLit 3.1s ease-in-out infinite;
+      inset 0 0 0 1px rgba(255,210,150,.34),
+      inset 0 0 9px 1px rgba(255,138,30,.4);
+    animation: shellLit 3.4s ease-in-out infinite;
   }
   .week-ring-wrap.complete .week-ring-orb::after{
     box-shadow:
-      inset 0 0 0 1px rgba(214,255,232,.4),
+      inset 0 0 0 1px rgba(214,255,232,.34),
       inset 0 0 9px 1px rgba(57,217,122,.4);
   }
   @keyframes shellLit{
-    0%,100%{ opacity:.35; }
-    50%{     opacity:.85; }
+    0%,100%{ opacity:.3; }
+    50%{     opacity:.7; }
   }
   .week-ring-label{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -672,10 +675,10 @@
      disabled above, the orb would sit there permanently empty, so show a single bolt
      statically instead of nothing. */
   @media (prefers-reduced-motion: reduce){
-    .orb-bolts{ opacity:.9; }
-    .week-ring-orb-spark{ opacity:.9; }
-    .week-ring-orb-glow{ opacity:.5; }
-    .week-ring-orb::after{ opacity:.6; }
+    .orb-bolts{ opacity:1; }
+    .week-ring-orb-spark{ opacity:1; }
+    .week-ring-orb-glow{ opacity:.7; }
+    .week-ring-orb::after{ opacity:.5; }
   }
 </style>
 </head>
@@ -1110,7 +1113,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-plasmaglobe';
+const APP_BUILD = '2026-07-17-blackhole';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2139,65 +2142,25 @@ function renderHome(){
           <div class="week-ring-orb-spark"></div>
           <svg class="orb-bolts" viewBox="0 0 100 100" aria-hidden="true">
             <g class="orb-bolts-spin">
-              <g class="fil f0">
-                <g class="halo" filter="url(#boltGlow)">
-                  <path d="M56.0,49.3L57.3,49.5L58.6,49.2L59.8,48.7L61.1,48.3L62.4,47.8L63.6,47.3L64.3,46.1L65.5,45.5L66.8,45.0L67.7,43.8L69.0,44.2L70.4,43.7L71.5,43.0L72.7,42.7L74.1,42.7L75.3,42.2L76.5,41.5L77.7,40.9L79.1,40.9L80.5,40.7L81.8,41.1L83.0,41.9L84.5,42.1L85.8,41.5L86.7,42.5L88.0,43.1L89.4,43.0L90.7,43.4L92.0,43.6L93.1,44.4L94.5,44.2L95.7,44.9"/>
-                  <path d="M77.7,40.9L78.2,40.4L78.6,39.7L79.4,39.8L80.1,39.4L80.7,39.9L81.5,39.8L82.2,39.6L82.9,39.5L83.6,39.7L84.0,40.4L84.7,40.4L85.3,40.7L85.9,41.2L86.6,41.2L87.3,41.4L88.0,41.4"/>
-                </g>
-                <g class="core">
-                  <path d="M56.0,49.3L57.3,49.5L58.6,49.2L59.8,48.7L61.1,48.3L62.4,47.8L63.6,47.3L64.3,46.1L65.5,45.5L66.8,45.0L67.7,43.8L69.0,44.2L70.4,43.7L71.5,43.0L72.7,42.7L74.1,42.7L75.3,42.2L76.5,41.5L77.7,40.9L79.1,40.9L80.5,40.7L81.8,41.1L83.0,41.9L84.5,42.1L85.8,41.5L86.7,42.5L88.0,43.1L89.4,43.0L90.7,43.4L92.0,43.6L93.1,44.4L94.5,44.2L95.7,44.9"/>
-                  <path d="M77.7,40.9L78.2,40.4L78.6,39.7L79.4,39.8L80.1,39.4L80.7,39.9L81.5,39.8L82.2,39.6L82.9,39.5L83.6,39.7L84.0,40.4L84.7,40.4L85.3,40.7L85.9,41.2L86.6,41.2L87.3,41.4L88.0,41.4"/>
-                </g>
+              <g class="arm a0">
+                <g class="halo" filter="url(#boltGlow)"><path d="M88.00,50.00L86.88,52.09L85.68,54.06L84.40,55.91L83.06,57.62L81.67,59.22L80.22,60.69L78.74,62.04L77.23,63.27L75.70,64.38L74.15,65.37L72.59,66.24L71.03,67.01L69.47,67.66L67.93,68.21L66.40,68.66L64.88,69.02L63.40,69.27L61.94,69.44L60.52,69.53L59.13,69.53L57.79,69.46L56.49,69.31L55.23,69.10L54.03,68.83L52.87,68.49L51.77,68.10L50.72,67.67L49.73,67.19L48.79,66.66L47.91,66.11L47.08,65.52L46.31,64.90L45.60,64.26L44.95,63.59L44.35,62.91L43.80,62.22L43.31,61.52L42.88,60.81L42.49,60.10L42.16,59.39L41.87,58.68L41.63,57.98L41.44,57.28L41.29,56.60L41.19,55.92L41.12,55.26L41.09,54.62L41.10,53.99L41.14,53.38L41.22,52.80L41.32,52.23L41.46,51.69L41.62,51.17L41.80,50.67L42.00,50.20L42.23,49.75L42.47,49.33L42.73,48.94L43.00,48.57L43.29,48.23"/></g>
+                <g class="core"><path d="M88.00,50.00L86.88,52.09L85.68,54.06L84.40,55.91L83.06,57.62L81.67,59.22L80.22,60.69L78.74,62.04L77.23,63.27L75.70,64.38L74.15,65.37L72.59,66.24L71.03,67.01L69.47,67.66L67.93,68.21L66.40,68.66L64.88,69.02L63.40,69.27L61.94,69.44L60.52,69.53L59.13,69.53L57.79,69.46L56.49,69.31L55.23,69.10L54.03,68.83L52.87,68.49L51.77,68.10L50.72,67.67L49.73,67.19L48.79,66.66L47.91,66.11L47.08,65.52L46.31,64.90L45.60,64.26L44.95,63.59L44.35,62.91L43.80,62.22L43.31,61.52L42.88,60.81L42.49,60.10L42.16,59.39L41.87,58.68L41.63,57.98L41.44,57.28L41.29,56.60L41.19,55.92L41.12,55.26L41.09,54.62L41.10,53.99L41.14,53.38L41.22,52.80L41.32,52.23L41.46,51.69L41.62,51.17L41.80,50.67L42.00,50.20L42.23,49.75L42.47,49.33L42.73,48.94L43.00,48.57L43.29,48.23"/></g>
               </g>
-              <g class="fil f1">
-                <g class="halo" filter="url(#boltGlow)">
-                  <path d="M53.8,54.6L54.2,56.0L54.6,57.3L55.5,58.4L56.6,59.2L57.9,59.3L59.2,59.9L60.4,60.5L61.5,61.4L61.7,62.8L62.7,63.8L63.2,65.0L63.0,66.4L64.1,67.1L64.8,68.3L65.0,69.6L65.7,70.8L66.7,71.6L67.8,72.2L68.7,73.1L69.5,74.1L70.6,74.7L71.7,75.4L72.6,76.4L73.2,77.5L73.9,78.6L74.9,79.5L76.0,80.2L77.3,80.7L77.6,82.0L77.7,83.3L78.6,84.3L79.3,85.5"/>
-                  <path d="M67.8,72.2L68.4,72.6L68.6,73.3L68.5,74.0L68.8,74.6L69.4,74.7L70.0,75.0L70.6,75.3L71.1,75.8L71.0,76.5L70.9,77.1L71.4,77.6L71.8,78.2L72.2,78.7L72.6,79.3L73.1,79.8L73.8,79.8"/>
-                </g>
-                <g class="core">
-                  <path d="M53.8,54.6L54.2,56.0L54.6,57.3L55.5,58.4L56.6,59.2L57.9,59.3L59.2,59.9L60.4,60.5L61.5,61.4L61.7,62.8L62.7,63.8L63.2,65.0L63.0,66.4L64.1,67.1L64.8,68.3L65.0,69.6L65.7,70.8L66.7,71.6L67.8,72.2L68.7,73.1L69.5,74.1L70.6,74.7L71.7,75.4L72.6,76.4L73.2,77.5L73.9,78.6L74.9,79.5L76.0,80.2L77.3,80.7L77.6,82.0L77.7,83.3L78.6,84.3L79.3,85.5"/>
-                  <path d="M67.8,72.2L68.4,72.6L68.6,73.3L68.5,74.0L68.8,74.6L69.4,74.7L70.0,75.0L70.6,75.3L71.1,75.8L71.0,76.5L70.9,77.1L71.4,77.6L71.8,78.2L72.2,78.7L72.6,79.3L73.1,79.8L73.8,79.8"/>
-                </g>
+              <g class="arm a1">
+                <g class="halo" filter="url(#boltGlow)"><path d="M61.74,86.14L59.41,85.72L57.16,85.18L55.01,84.54L52.96,83.80L51.02,82.96L49.17,82.05L47.43,81.06L45.80,80.00L44.27,78.88L42.85,77.72L41.53,76.51L40.32,75.26L39.22,73.98L38.22,72.68L37.32,71.36L36.51,70.03L35.81,68.70L35.20,67.37L34.68,66.04L34.25,64.72L33.90,63.42L33.64,62.14L33.45,60.88L33.34,59.65L33.30,58.45L33.33,57.28L33.42,56.15L33.57,55.05L33.78,54.00L34.04,52.99L34.34,52.02L34.69,51.10L35.08,50.22L35.51,49.40L35.97,48.62L36.46,47.88L36.98,47.20L37.52,46.57L38.07,45.98L38.65,45.44L39.23,44.95L39.83,44.51L40.43,44.11L41.04,43.76L41.64,43.45L42.25,43.18L42.86,42.96L43.45,42.77L44.05,42.62L44.63,42.51L45.20,42.44L45.76,42.40L46.30,42.39L46.83,42.41L47.34,42.46L47.83,42.53L48.31,42.63L48.76,42.76L49.20,42.90L49.61,43.07"/></g>
+                <g class="core"><path d="M61.74,86.14L59.41,85.72L57.16,85.18L55.01,84.54L52.96,83.80L51.02,82.96L49.17,82.05L47.43,81.06L45.80,80.00L44.27,78.88L42.85,77.72L41.53,76.51L40.32,75.26L39.22,73.98L38.22,72.68L37.32,71.36L36.51,70.03L35.81,68.70L35.20,67.37L34.68,66.04L34.25,64.72L33.90,63.42L33.64,62.14L33.45,60.88L33.34,59.65L33.30,58.45L33.33,57.28L33.42,56.15L33.57,55.05L33.78,54.00L34.04,52.99L34.34,52.02L34.69,51.10L35.08,50.22L35.51,49.40L35.97,48.62L36.46,47.88L36.98,47.20L37.52,46.57L38.07,45.98L38.65,45.44L39.23,44.95L39.83,44.51L40.43,44.11L41.04,43.76L41.64,43.45L42.25,43.18L42.86,42.96L43.45,42.77L44.05,42.62L44.63,42.51L45.20,42.44L45.76,42.40L46.30,42.39L46.83,42.41L47.34,42.46L47.83,42.53L48.31,42.63L48.76,42.76L49.20,42.90L49.61,43.07"/></g>
               </g>
-              <g class="fil f2">
-                <g class="halo" filter="url(#boltGlow)">
-                  <path d="M47.2,55.3L46.8,56.6L46.6,57.9L46.8,59.3L46.7,60.6L45.9,61.6L45.2,62.8L45.0,64.1L44.0,65.1L43.7,66.4L43.3,67.6L42.9,68.9L43.1,70.2L42.8,71.5L42.3,72.7L42.6,74.0L42.4,75.3L41.3,76.2L40.4,77.2L39.7,78.4L39.0,79.6L38.8,80.9L38.2,82.2L37.9,83.5L37.5,84.8L36.4,85.6L35.5,86.7L34.6,87.6L33.8,88.8L32.8,89.8L31.5,90.2L30.1,90.7L28.8,90.8"/>
-                  <path d="M40.4,77.2L40.3,77.9L39.9,78.5L40.3,79.0L40.3,79.7L40.1,80.3L39.9,80.9L39.9,81.5L39.8,82.1L39.5,82.6L39.4,83.3L39.0,83.7L39.0,84.4L38.6,84.9L38.3,85.5L38.4,86.1L38.5,86.8"/>
-                </g>
-                <g class="core">
-                  <path d="M47.2,55.3L46.8,56.6L46.6,57.9L46.8,59.3L46.7,60.6L45.9,61.6L45.2,62.8L45.0,64.1L44.0,65.1L43.7,66.4L43.3,67.6L42.9,68.9L43.1,70.2L42.8,71.5L42.3,72.7L42.6,74.0L42.4,75.3L41.3,76.2L40.4,77.2L39.7,78.4L39.0,79.6L38.8,80.9L38.2,82.2L37.9,83.5L37.5,84.8L36.4,85.6L35.5,86.7L34.6,87.6L33.8,88.8L32.8,89.8L31.5,90.2L30.1,90.7L28.8,90.8"/>
-                  <path d="M40.4,77.2L40.3,77.9L39.9,78.5L40.3,79.0L40.3,79.7L40.1,80.3L39.9,80.9L39.9,81.5L39.8,82.1L39.5,82.6L39.4,83.3L39.0,83.7L39.0,84.4L38.6,84.9L38.3,85.5L38.4,86.1L38.5,86.8"/>
-                </g>
+              <g class="arm a2">
+                <g class="halo" filter="url(#boltGlow)"><path d="M19.26,72.34L18.93,69.98L18.75,67.68L18.70,65.44L18.77,63.26L18.96,61.15L19.26,59.12L19.67,57.15L20.17,55.27L20.76,53.48L21.43,51.76L22.18,50.14L22.99,48.60L23.86,47.16L24.79,45.80L25.76,44.54L26.78,43.36L27.83,42.28L28.91,41.29L30.01,40.38L31.13,39.57L32.26,38.84L33.40,38.19L34.54,37.62L35.68,37.14L36.81,36.73L37.93,36.39L39.03,36.13L40.12,35.94L41.18,35.81L42.23,35.74L43.24,35.73L44.23,35.78L45.18,35.88L46.10,36.03L46.98,36.23L47.83,36.47L48.64,36.75L49.41,37.07L50.14,37.41L50.83,37.79L51.47,38.20L52.08,38.63L52.64,39.08L53.17,39.55L53.65,40.03L54.09,40.52L54.49,41.03L54.85,41.54L55.18,42.06L55.46,42.58L55.71,43.10L55.92,43.61L56.10,44.13L56.24,44.64L56.35,45.14L56.43,45.63L56.48,46.11L56.51,46.59L56.50,47.05L56.47,47.49"/></g>
+                <g class="core"><path d="M19.26,72.34L18.93,69.98L18.75,67.68L18.70,65.44L18.77,63.26L18.96,61.15L19.26,59.12L19.67,57.15L20.17,55.27L20.76,53.48L21.43,51.76L22.18,50.14L22.99,48.60L23.86,47.16L24.79,45.80L25.76,44.54L26.78,43.36L27.83,42.28L28.91,41.29L30.01,40.38L31.13,39.57L32.26,38.84L33.40,38.19L34.54,37.62L35.68,37.14L36.81,36.73L37.93,36.39L39.03,36.13L40.12,35.94L41.18,35.81L42.23,35.74L43.24,35.73L44.23,35.78L45.18,35.88L46.10,36.03L46.98,36.23L47.83,36.47L48.64,36.75L49.41,37.07L50.14,37.41L50.83,37.79L51.47,38.20L52.08,38.63L52.64,39.08L53.17,39.55L53.65,40.03L54.09,40.52L54.49,41.03L54.85,41.54L55.18,42.06L55.46,42.58L55.71,43.10L55.92,43.61L56.10,44.13L56.24,44.64L56.35,45.14L56.43,45.63L56.48,46.11L56.51,46.59L56.50,47.05L56.47,47.49"/></g>
               </g>
-              <g class="fil f3">
-                <g class="halo" filter="url(#boltGlow)">
-                  <path d="M44.1,50.9L42.7,50.5L41.6,49.7L40.2,49.9L39.0,49.3L37.6,49.6L36.3,49.1L35.0,49.3L33.6,49.3L32.3,48.6L31.5,47.5L30.0,47.5L28.7,46.9L27.3,46.9L26.0,47.5L24.6,47.7L23.3,47.1L22.7,48.4L22.1,49.7L21.2,50.8L19.9,51.4L18.5,51.9L17.4,52.7L16.0,52.9L14.8,53.6L13.4,53.7L12.1,54.0L10.7,54.5L9.7,55.4L8.5,56.0L7.2,56.4L5.8,56.5L4.5,56.6"/>
-                  <path d="M22.1,49.7L21.5,49.4L20.8,49.5L20.1,49.5L19.4,49.4L18.9,49.8L18.3,50.2L17.7,50.6L16.9,50.3L16.5,50.9L16.1,51.5L15.3,51.5L14.7,51.9L14.6,52.6L14.3,53.2L13.9,53.8L13.8,54.5"/>
-                </g>
-                <g class="core">
-                  <path d="M44.1,50.9L42.7,50.5L41.6,49.7L40.2,49.9L39.0,49.3L37.6,49.6L36.3,49.1L35.0,49.3L33.6,49.3L32.3,48.6L31.5,47.5L30.0,47.5L28.7,46.9L27.3,46.9L26.0,47.5L24.6,47.7L23.3,47.1L22.7,48.4L22.1,49.7L21.2,50.8L19.9,51.4L18.5,51.9L17.4,52.7L16.0,52.9L14.8,53.6L13.4,53.7L12.1,54.0L10.7,54.5L9.7,55.4L8.5,56.0L7.2,56.4L5.8,56.5L4.5,56.6"/>
-                  <path d="M22.1,49.7L21.5,49.4L20.8,49.5L20.1,49.5L19.4,49.4L18.9,49.8L18.3,50.2L17.7,50.6L16.9,50.3L16.5,50.9L16.1,51.5L15.3,51.5L14.7,51.9L14.6,52.6L14.3,53.2L13.9,53.8L13.8,54.5"/>
-                </g>
+              <g class="arm a3">
+                <g class="halo" filter="url(#boltGlow)"><path d="M19.26,27.66L21.39,26.63L23.52,25.74L25.64,25.00L27.74,24.40L29.80,23.93L31.83,23.59L33.82,23.36L35.77,23.26L37.66,23.26L39.49,23.37L41.27,23.58L42.98,23.88L44.63,24.26L46.20,24.73L47.71,25.26L49.14,25.87L50.49,26.53L51.77,27.25L52.97,28.02L54.09,28.83L55.14,29.68L56.10,30.56L56.99,31.47L57.81,32.40L58.54,33.35L59.21,34.31L59.80,35.28L60.32,36.26L60.77,37.23L61.16,38.20L61.48,39.16L61.74,40.11L61.94,41.05L62.08,41.97L62.16,42.87L62.20,43.75L62.18,44.61L62.12,45.44L62.01,46.24L61.86,47.01L61.68,47.75L61.46,48.46L61.20,49.14L60.92,49.78L60.61,50.39L60.28,50.96L59.92,51.50L59.55,52.00L59.15,52.47L58.75,52.90L58.33,53.30L57.90,53.66L57.47,53.98L57.03,54.28L56.59,54.54L56.14,54.77L55.70,54.96L55.26,55.13L54.82,55.27L54.39,55.38"/></g>
+                <g class="core"><path d="M19.26,27.66L21.39,26.63L23.52,25.74L25.64,25.00L27.74,24.40L29.80,23.93L31.83,23.59L33.82,23.36L35.77,23.26L37.66,23.26L39.49,23.37L41.27,23.58L42.98,23.88L44.63,24.26L46.20,24.73L47.71,25.26L49.14,25.87L50.49,26.53L51.77,27.25L52.97,28.02L54.09,28.83L55.14,29.68L56.10,30.56L56.99,31.47L57.81,32.40L58.54,33.35L59.21,34.31L59.80,35.28L60.32,36.26L60.77,37.23L61.16,38.20L61.48,39.16L61.74,40.11L61.94,41.05L62.08,41.97L62.16,42.87L62.20,43.75L62.18,44.61L62.12,45.44L62.01,46.24L61.86,47.01L61.68,47.75L61.46,48.46L61.20,49.14L60.92,49.78L60.61,50.39L60.28,50.96L59.92,51.50L59.55,52.00L59.15,52.47L58.75,52.90L58.33,53.30L57.90,53.66L57.47,53.98L57.03,54.28L56.59,54.54L56.14,54.77L55.70,54.96L55.26,55.13L54.82,55.27L54.39,55.38"/></g>
               </g>
-              <g class="fil f4">
-                <g class="halo" filter="url(#boltGlow)">
-                  <path d="M46.1,45.4L45.7,44.1L45.6,42.7L46.0,41.4L46.1,40.0L45.5,38.6L45.8,37.2L44.9,36.1L44.5,34.7L43.8,33.5L42.8,32.4L42.5,31.0L42.4,29.6L41.6,28.3L40.4,27.6L39.3,26.8L38.1,26.0L36.9,25.4L35.6,24.9L34.4,24.6L33.1,24.1L32.0,23.4L30.9,22.7L29.7,22.1L28.7,21.1L27.4,20.9L26.3,19.9L25.1,19.4L23.8,19.0L23.3,17.6L22.4,16.6L21.2,16.0L20.2,15.0"/>
-                  <path d="M35.6,24.9L35.4,24.4L35.6,24.0L35.3,23.6L34.9,23.4L34.8,23.0L34.4,22.8L34.2,22.5L34.0,22.1L33.5,22.4L33.0,22.3L32.7,21.9L32.1,21.9L31.8,21.5L31.4,21.2L31.1,20.7L31.4,20.2"/>
-                </g>
-                <g class="core">
-                  <path d="M46.1,45.4L45.7,44.1L45.6,42.7L46.0,41.4L46.1,40.0L45.5,38.6L45.8,37.2L44.9,36.1L44.5,34.7L43.8,33.5L42.8,32.4L42.5,31.0L42.4,29.6L41.6,28.3L40.4,27.6L39.3,26.8L38.1,26.0L36.9,25.4L35.6,24.9L34.4,24.6L33.1,24.1L32.0,23.4L30.9,22.7L29.7,22.1L28.7,21.1L27.4,20.9L26.3,19.9L25.1,19.4L23.8,19.0L23.3,17.6L22.4,16.6L21.2,16.0L20.2,15.0"/>
-                  <path d="M35.6,24.9L35.4,24.4L35.6,24.0L35.3,23.6L34.9,23.4L34.8,23.0L34.4,22.8L34.2,22.5L34.0,22.1L33.5,22.4L33.0,22.3L32.7,21.9L32.1,21.9L31.8,21.5L31.4,21.2L31.1,20.7L31.4,20.2"/>
-                </g>
-              </g>
-              <g class="fil f5">
-                <g class="halo" filter="url(#boltGlow)">
-                  <path d="M52.8,44.7L54.0,43.9L55.3,43.5L56.2,42.4L56.7,41.1L56.9,39.8L57.6,38.6L58.2,37.4L59.0,36.3L60.0,35.5L60.9,34.4L62.1,33.9L63.5,33.5L64.0,32.3L64.7,31.1L65.6,30.2L66.8,29.4L67.5,28.2L68.6,27.3L69.2,26.0L69.1,24.6L69.5,23.3L69.1,21.9L69.2,20.6L68.8,19.3L69.3,18.0L69.0,16.7L70.0,15.7L70.1,14.3L70.2,12.9L71.0,11.8L71.4,10.6L71.3,9.2"/>
-                  <path d="M68.6,27.3L68.8,26.7L69.1,26.0L69.5,25.4L69.5,24.7L70.1,24.3L70.4,23.6L70.7,23.0L71.0,22.3L71.5,21.7L71.7,21.0L71.7,20.2L71.2,19.5L71.1,18.8L71.4,18.1L71.2,17.4L71.1,16.7"/>
-                </g>
-                <g class="core">
-                  <path d="M52.8,44.7L54.0,43.9L55.3,43.5L56.2,42.4L56.7,41.1L56.9,39.8L57.6,38.6L58.2,37.4L59.0,36.3L60.0,35.5L60.9,34.4L62.1,33.9L63.5,33.5L64.0,32.3L64.7,31.1L65.6,30.2L66.8,29.4L67.5,28.2L68.6,27.3L69.2,26.0L69.1,24.6L69.5,23.3L69.1,21.9L69.2,20.6L68.8,19.3L69.3,18.0L69.0,16.7L70.0,15.7L70.1,14.3L70.2,12.9L71.0,11.8L71.4,10.6L71.3,9.2"/>
-                  <path d="M68.6,27.3L68.8,26.7L69.1,26.0L69.5,25.4L69.5,24.7L70.1,24.3L70.4,23.6L70.7,23.0L71.0,22.3L71.5,21.7L71.7,21.0L71.7,20.2L71.2,19.5L71.1,18.8L71.4,18.1L71.2,17.4L71.1,16.7"/>
-                </g>
+              <g class="arm a4">
+                <g class="halo" filter="url(#boltGlow)"><path d="M61.74,13.86L63.39,15.57L64.89,17.32L66.25,19.11L67.47,20.91L68.55,22.73L69.51,24.56L70.33,26.38L71.03,28.20L71.61,30.00L72.08,31.78L72.43,33.53L72.67,35.25L72.82,36.94L72.86,38.58L72.82,40.17L72.69,41.72L72.47,43.21L72.18,44.65L71.82,46.03L71.40,47.35L70.91,48.60L70.37,49.80L69.78,50.92L69.15,51.99L68.47,52.98L67.77,53.91L67.03,54.77L66.26,55.57L65.47,56.30L64.67,56.97L63.86,57.57L63.03,58.11L62.20,58.59L61.37,59.01L60.54,59.37L59.71,59.67L58.89,59.92L58.08,60.12L57.29,60.26L56.51,60.36L55.74,60.41L55.00,60.42L54.28,60.39L53.58,60.32L52.91,60.21L52.26,60.07L51.64,59.90L51.05,59.70L50.48,59.47L49.95,59.22L49.44,58.94L48.96,58.65L48.52,58.33L48.10,58.01L47.72,57.67L47.36,57.31L47.04,56.95L46.74,56.59L46.48,56.21L46.24,55.83"/></g>
+                <g class="core"><path d="M61.74,13.86L63.39,15.57L64.89,17.32L66.25,19.11L67.47,20.91L68.55,22.73L69.51,24.56L70.33,26.38L71.03,28.20L71.61,30.00L72.08,31.78L72.43,33.53L72.67,35.25L72.82,36.94L72.86,38.58L72.82,40.17L72.69,41.72L72.47,43.21L72.18,44.65L71.82,46.03L71.40,47.35L70.91,48.60L70.37,49.80L69.78,50.92L69.15,51.99L68.47,52.98L67.77,53.91L67.03,54.77L66.26,55.57L65.47,56.30L64.67,56.97L63.86,57.57L63.03,58.11L62.20,58.59L61.37,59.01L60.54,59.37L59.71,59.67L58.89,59.92L58.08,60.12L57.29,60.26L56.51,60.36L55.74,60.41L55.00,60.42L54.28,60.39L53.58,60.32L52.91,60.21L52.26,60.07L51.64,59.90L51.05,59.70L50.48,59.47L49.95,59.22L49.44,58.94L48.96,58.65L48.52,58.33L48.10,58.01L47.72,57.67L47.36,57.31L47.04,56.95L46.74,56.59L46.48,56.21L46.24,55.83"/></g>
               </g>
             </g>
           </svg>
