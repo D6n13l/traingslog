@@ -240,84 +240,46 @@
     100%{ transform:translate(-50%,-50%); }
   }
 
-  /* the broken core: several irregular, softly-blurred blobs (deliberately asymmetric
-     border-radius, NOT a rounded square) drift independently and overlap. Under
-     mix-blend-mode:screen the overlaps blend into brighter, shifting masses - so the
-     visible shape keeps changing as the blobs slide over each other, without ever
-     needing a per-frame pixel filter (fixed blur + GPU transform only, so this costs
-     nothing extra over a static blur - unlike the gooey/SVG-threshold version, which
-     had to recompute a contrast filter every frame and dropped frames badly). */
+  /* the broken core: ONE single-piece shape with a genuinely irregular outline
+     (clip-path polygon with jittered vertices - not border-radius, which always reads
+     as a rounded rectangle, and not multiple overlapping blobs, which regress back
+     toward a smooth/symmetric union once they overlap enough - both were tried and
+     both still looked rectangular). clip-path polygon animation is native CSS,
+     verified to actually interpolate here (unlike SVG SMIL path animation, which does
+     not run in this environment at all), and costs nothing extra per frame (no pixel
+     filter, just a clip mask) - confirmed to hold 60fps. */
   .core-blob{
     position:absolute; left:50%; top:50%; width:60%; height:60%;
     transform:translate(-50%,-50%);
     z-index:2; pointer-events:none; mix-blend-mode:screen;
-    filter:blur(3px);
+    background:var(--glx);
+    clip-path:polygon(98.1% 50.0%, 92.4% 80.8%, 70.7% 100.0%, 35.0% 96.2%, 9.3% 79.6%, 0.0% 50.0%, 19.8% 28.0%, 34.4% 2.0%, 67.1% 0.0%, 99.9% 13.7%);
+    animation: coreMorph 3.3s ease-in-out infinite, coreFlicker 1.3s steps(1) infinite;
+    filter:blur(1.5px);
   }
-  .core-blob i{
-    position:absolute; background:var(--glx);
-    animation-name: coreFlicker;
-    animation-duration:1.3s;
-    animation-timing-function:steps(1);
-    animation-iteration-count:infinite;
-  }
-  .week-ring-wrap.complete .core-blob i{ background:var(--glow-green) !important; }
+  .week-ring-wrap.complete .core-blob{ background:var(--glow-green) !important; }
 
-  .core-blob .c1{
-    left:14%; top:10%; width:58%; height:50%;
-    border-radius:62% 38% 55% 45% / 48% 60% 40% 52%;
-    animation-name: wander1, coreFlicker; animation-duration:2.6s, 1.3s;
-  }
-  .core-blob .c2{
-    left:38%; top:6%; width:46%; height:44%;
-    border-radius:40% 60% 45% 55% / 58% 42% 60% 40%;
-    animation-name: wander2, coreFlicker; animation-duration:3.1s, 1.3s;
-  }
-  .core-blob .c3{
-    left:6%; top:36%; width:50%; height:52%;
-    border-radius:55% 45% 62% 38% / 42% 55% 45% 58%;
-    animation-name: wander3, coreFlicker; animation-duration:2.3s, 1.3s;
-  }
-  .core-blob .c4{
-    left:30%; top:32%; width:36%; height:34%;
-    border-radius:48% 52% 40% 60% / 60% 38% 62% 40%;
-    animation-name: wander4, coreFlicker; animation-duration:3.6s, 1.3s;
-  }
-
-  @keyframes wander1{
-    0%,100%{ transform:translate(0,0)      rotate(0deg)    scale(1); }
-    30%{     transform:translate(11%,9%)   rotate(35deg)   scale(1.14); }
-    62%{     transform:translate(-7%,13%)  rotate(-25deg)  scale(.86); }
-    85%{     transform:translate(5%,-8%)   rotate(50deg)   scale(1.05); }
-  }
-  @keyframes wander2{
-    0%,100%{ transform:translate(0,0)      rotate(0deg)   scale(1); }
-    38%{     transform:translate(-13%,10%) rotate(-40deg) scale(.88); }
-    70%{     transform:translate(3%,16%)   rotate(30deg)  scale(1.16); }
-  }
-  @keyframes wander3{
-    0%,100%{ transform:translate(0,0)      rotate(0deg)   scale(1); }
-    25%{     transform:translate(10%,-7%)  rotate(28deg)  scale(1.1); }
-    55%{     transform:translate(15%,8%)   rotate(-32deg) scale(.9); }
-    80%{     transform:translate(-5%,3%)   rotate(20deg)  scale(1.06); }
-  }
-  @keyframes wander4{
-    0%,100%{ transform:translate(0,0)      rotate(0deg)  scale(1); }
-    45%{     transform:translate(16%,-12%) rotate(60deg) scale(1.2); }
-    75%{     transform:translate(-12%,12%) rotate(-40deg) scale(.82); }
+  @keyframes coreMorph{
+    0%{   clip-path:polygon(98.1% 50.0%, 92.4% 80.8%, 70.7% 100.0%, 35.0% 96.2%, 9.3% 79.6%, 0.0% 50.0%, 19.8% 28.0%, 34.4% 2.0%, 67.1% 0.0%, 99.9% 13.7%); }
+    20%{  clip-path:polygon(100.0% 50.0%, 78.8% 70.9%, 59.6% 79.4%, 28.4% 100.0%, 19.8% 72.0%, 15.2% 50.0%, 4.6% 17.1%, 36.5% 8.3%, 70.3% 0.0%, 81.8% 26.9%); }
+    40%{  clip-path:polygon(100.0% 50.0%, 94.7% 82.5%, 69.4% 100.0%, 37.3% 89.1%, 4.6% 83.0%, 0.0% 50.0%, 0.0% 11.0%, 38.4% 14.4%, 67.3% 0.0%, 94.2% 17.9%); }
+    60%{  clip-path:polygon(96.3% 50.0%, 91.8% 80.4%, 69.9% 100.0%, 38.5% 85.3%, 18.4% 72.9%, 18.8% 50.0%, 22.0% 29.6%, 40.6% 21.1%, 61.2% 15.5%, 90.9% 20.3%); }
+    80%{  clip-path:polygon(83.6% 50.0%, 100.0% 90.0%, 61.1% 84.2%, 31.6% 100.0%, 0.0% 87.4%, 0.0% 50.0%, 16.0% 25.3%, 36.4% 8.1%, 68.2% 0.0%, 100.0% 9.7%); }
+    100%{ clip-path:polygon(98.1% 50.0%, 92.4% 80.8%, 70.7% 100.0%, 35.0% 96.2%, 9.3% 79.6%, 0.0% 50.0%, 19.8% 28.0%, 34.4% 2.0%, 67.1% 0.0%, 99.9% 13.7%); }
   }
 
   @keyframes coreFlicker{
-    0%{   background:var(--glx);  opacity:.8; }
-    11%{  background:var(--glx2); opacity:.6; }
+    0%{   background:var(--glx);  opacity:.85; }
+    11%{  background:var(--glx2); opacity:.65; }
     12%{  background:var(--glx3); opacity:1; }
-    27%{  background:var(--glx);  opacity:.45; }
-    30%{  background:var(--glx);  opacity:.85; }
-    54%{  background:var(--glx);  opacity:.75; }
-    55%{  background:var(--glx2); opacity:.8; }
-    57%{  background:var(--glx);  opacity:.8; }
-    84%{  background:var(--glx);  opacity:.35; }
-    86%{  background:var(--glx);  opacity:.8; }
-    100%{ background:var(--glx);  opacity:.8; }
+    27%{  background:var(--glx);  opacity:.5; }
+    30%{  background:var(--glx);  opacity:.9; }
+    54%{  background:var(--glx);  opacity:.8; }
+    55%{  background:var(--glx2); opacity:.85; }
+    57%{  background:var(--glx);  opacity:.85; }
+    84%{  background:var(--glx);  opacity:.4; }
+    86%{  background:var(--glx);  opacity:.85; }
+    100%{ background:var(--glx);  opacity:.85; }
   }
 
   /* full-orb flash frames - the whole thing blows out white/colour for one step,
@@ -783,7 +745,7 @@
      statically instead of nothing. */
   @media (prefers-reduced-motion: reduce){
     .glitch-bars{ opacity:.7; }
-    .core-blob i{ animation:none !important; opacity:.9; background:var(--glx) !important; }
+    .core-blob{ animation:none !important; opacity:.9; }
     .glitch-rgb, .week-ring-orb-glow{ opacity:0; }
     .week-ring-orb::after{ opacity:.5; }
   }
@@ -1207,7 +1169,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-cheapblob';
+const APP_BUILD = '2026-07-17-clipblob';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2234,9 +2196,7 @@ function renderHome(){
         <div class="week-ring-orb-glow"></div>
         <div class="week-ring-orb">
           <div class="glitch-bars"></div>
-          <div class="core-blob">
-            <i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i>
-          </div>
+          <div class="core-blob"></div>
           <div class="glitch-rgb">
             <i class="r"></i><i class="g"></i><i class="b"></i>
           </div>
