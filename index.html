@@ -159,112 +159,160 @@
   */
   .week-ring-orb{
     position:absolute; inset:13px; border-radius:50%; z-index:1; overflow:hidden;
-    /* Uniform, directionless darkening - a gradient with an off-centre origin would imply
-       a light somewhere, which is exactly what we do not want. */
-    background:radial-gradient(circle at 50% 50%, rgba(0,0,0,.3), rgba(0,0,0,.5) 100%);
-    backdrop-filter:contrast(120%) brightness(.72);
-    -webkit-backdrop-filter:contrast(120%) brightness(.72);
+    background:radial-gradient(circle at 50% 50%, #0a0d12, #05070a 100%);
+    backdrop-filter:contrast(130%) brightness(.6);
+    -webkit-backdrop-filter:contrast(130%) brightness(.6);
   }
 
-  /* --- Black hole: a glowing accretion disc spirals into a dark core. Light only comes
-         from the disc (matter heated as it falls in); the centre is genuine void. On the
-         pulse everything is dragged inward and the disc flares - like a burst of infall. --- */
-  :root{ --disc:#ff8a1e; --disc-hot:#fff2c4; --disc-deep:#c42a6b; }
+  /* --- Glitch: something inside the glass is broken. No smooth loops - everything moves
+         on jittery, asymmetric, prime-ish timings so nothing ever lines up and the eye
+         can't predict it. That unpredictability is what reads as "wrong". --- */
+  :root{ --glx:#00e5ff; --glx2:#ff003c; --glx3:#e8ff00; }
 
   .orb-bolts{
     position:absolute; inset:0; width:100%; height:100%; z-index:2;
-    pointer-events:none; overflow:visible;
-    animation: holePulse 3.4s ease-in-out infinite;
-  }
-  /* the disc rotates continuously - this is the orbital motion of the infalling matter */
-  .orb-bolts-spin{
-    width:100%; height:100%; transform-origin:50% 50%;
-    animation: discSpin 14s linear infinite;
-  }
-  @keyframes discSpin{ to{ transform:rotate(360deg); } }
-
-  /* pulse: the whole disc is pulled inward (scale down) and flares brighter, then relaxes */
-  @keyframes holePulse{
-    0%,100%{ transform:scale(1);    filter:brightness(.92) saturate(1); }
-    50%{     transform:scale(.9);  filter:brightness(1.5) saturate(1.25); }
+    pointer-events:none; overflow:hidden;
+    border-radius:50%;
   }
 
-  .arm .halo path{
-    fill:none; stroke:var(--disc); stroke-width:2.6;
-    stroke-linecap:round; stroke-linejoin:round;
-  }
-  .arm .core path{
-    fill:none; stroke:var(--disc-hot); stroke-width:.8;
-    stroke-linecap:round; stroke-linejoin:round;
-  }
-  /* inner arms burn hotter (deeper in the gravity well) */
-  .arm .core path{ stroke:var(--disc-hot); }
+  /* horizontal scanlines that tear and jump */
+  .arm{ transform-origin:50% 50%; }
+  .arm .halo path, .arm .core path{ display:none; }  /* paths unused in glitch mode */
 
-  /* the event horizon: a pure black core, ringed by a razor-thin, very bright PHOTON RING
-     where light orbits the hole before falling in. That bright ring hugging pure black is
-     the single strongest "this is a black hole" cue (the Interstellar / EHT look). */
-  .week-ring-orb-spark{
-    position:absolute; left:50%; top:50%; width:52%; height:52%;
+  /* datamosh bars: hard-edged colour bands that snap to new positions */
+  .glitch-bars{
+    position:absolute; inset:0; z-index:2; mix-blend-mode:screen;
+    background:
+      linear-gradient(0deg, transparent 0%, var(--glx) 0.5%, transparent 1.2%),
+      linear-gradient(0deg, transparent 0%, var(--glx2) 0.4%, transparent 1%),
+      linear-gradient(0deg, transparent 0%, var(--glx3) 0.3%, transparent 0.8%);
+    background-size:100% 33%, 100% 51%, 100% 27%;
+    background-position:0 10%, 0 60%, 0 35%;
+    animation: barsJump 2.7s steps(1) infinite;
+  }
+  @keyframes barsJump{
+    0%{   background-position:0 8%, 0 61%, 0 33%; opacity:.8; }
+    9%{   background-position:0 72%, 0 20%, 0 88%; opacity:.4; }
+    14%{  background-position:0 34%, 0 90%, 0 12%; opacity:.9; }
+    22%{  background-position:0 55%, 0 5%, 0 66%; opacity:.3; }
+    23%{  background-position:0 55%, 0 5%, 0 66%; opacity:1; }
+    38%{  background-position:0 18%, 0 77%, 0 44%; opacity:.6; }
+    52%{  background-position:0 83%, 0 40%, 0 21%; opacity:.85; }
+    53%{  opacity:.1; }
+    54%{  opacity:.9; }
+    71%{  background-position:0 29%, 0 63%, 0 9%; opacity:.5; }
+    88%{  background-position:0 47%, 0 14%, 0 71%; opacity:.75; }
+    100%{ background-position:0 8%, 0 61%, 0 33%; opacity:.8; }
+  }
+
+  /* RGB split: three offset copies of a bright core that don't quite align, tearing apart
+     and snapping back - the classic broken-signal chromatic aberration */
+  .glitch-rgb{
+    position:absolute; left:50%; top:50%; width:56%; height:56%;
     transform:translate(-50%,-50%);
-    border-radius:50%; z-index:3; pointer-events:none;
-    background:
-      radial-gradient(circle,
-        #000 0%, #000 30%,
-        rgba(0,0,0,.98) 33%,
-        var(--disc-hot) 35%, #fff 37%, var(--disc-hot) 40%,
-        var(--disc) 46%, rgba(255,138,30,.4) 55%, transparent 70%);
-    box-shadow:0 0 8px 1px rgba(255,138,30,.5);
-    animation: horizon 3.4s ease-in-out infinite;
+    z-index:3; pointer-events:none; mix-blend-mode:screen;
+    animation: rgbShift 1.9s steps(1) infinite;
   }
-  .week-ring-wrap.complete .week-ring-orb-spark{
-    background:
-      radial-gradient(circle,
-        #000 0%, #000 30%,
-        rgba(0,0,0,.98) 33%,
-        #d8ffe8 35%, #fff 37%, #d8ffe8 40%,
-        var(--glow-green) 46%, rgba(57,217,122,.4) 55%, transparent 70%);
-    box-shadow:0 0 8px 1px rgba(57,217,122,.5);
+  .glitch-rgb span{
+    position:absolute; inset:0; border-radius:6px;
+    font-family:'Oswald',sans-serif; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
   }
-  @keyframes horizon{
-    0%,100%{ transform:translate(-50%,-50%) scale(1);   filter:brightness(1); }
-    50%{     transform:translate(-50%,-50%) scale(.9);  filter:brightness(1.35); }
+  .glitch-rgb i{
+    position:absolute; inset:18% 8%; border-radius:4px;
+  }
+  .glitch-rgb .r{ background:var(--glx2); mix-blend-mode:screen; }
+  .glitch-rgb .g{ background:var(--glx3); mix-blend-mode:screen; }
+  .glitch-rgb .b{ background:var(--glx);  mix-blend-mode:screen; }
+  @keyframes rgbShift{
+    0%{   transform:translate(-50%,-50%); filter:none; }
+    7%{   transform:translate(-44%,-53%) skewX(-8deg); }
+    8%{   transform:translate(-56%,-48%) skewX(9deg); }
+    15%{  transform:translate(-50%,-50%); }
+    43%{  transform:translate(-50%,-50%); }
+    44%{  transform:translate(-58%,-50%) skewX(14deg); }
+    46%{  transform:translate(-42%,-50%) skewX(-11deg); }
+    48%{  transform:translate(-50%,-50%); }
+    77%{  transform:translate(-50%,-50%); }
+    78%{  transform:translate(-51%,-58%); }
+    80%{  transform:translate(-49%,-42%); }
+    82%{  transform:translate(-50%,-50%); }
+    100%{ transform:translate(-50%,-50%); }
   }
 
-  /* faint accretion glow filling the disc plane, breathing with the pulse */
+  /* the broken core: a jittering shape that flickers between colours and sizes, never
+     settling. Uses the spark element. */
+  .week-ring-orb-spark{
+    position:absolute; left:50%; top:50%; width:40%; height:40%;
+    transform:translate(-50%,-50%);
+    z-index:3; pointer-events:none; mix-blend-mode:screen;
+    background:var(--glx);
+    clip-path:polygon(20% 15%, 80% 10%, 92% 60%, 65% 92%, 15% 80%);
+    animation: coreGlitch 1.3s steps(1) infinite;
+  }
+  .week-ring-wrap.complete .week-ring-orb-spark{ background:var(--glow-green); }
+  @keyframes coreGlitch{
+    0%{   clip-path:polygon(20% 15%, 80% 10%, 92% 60%, 65% 92%, 15% 80%); background:var(--glx); opacity:.9; transform:translate(-50%,-50%) scale(1); }
+    11%{  clip-path:polygon(35% 8%, 70% 22%, 88% 45%, 55% 78%, 8% 62%); background:var(--glx2); opacity:.6; transform:translate(-53%,-48%) scale(1.15); }
+    12%{  clip-path:polygon(10% 30%, 90% 12%, 78% 70%, 48% 88%, 22% 55%); background:var(--glx3); opacity:1; transform:translate(-47%,-52%) scale(.85); }
+    27%{  clip-path:polygon(20% 15%, 80% 10%, 92% 60%, 65% 92%, 15% 80%); background:var(--glx); opacity:.75; transform:translate(-50%,-50%) scale(1.05); }
+    28%{  opacity:.15; }
+    30%{  opacity:.85; }
+    54%{  clip-path:polygon(28% 20%, 75% 18%, 85% 55%, 60% 85%, 18% 72%); background:var(--glx); opacity:.9; transform:translate(-50%,-50%) scale(1); }
+    55%{  clip-path:polygon(40% 5%, 95% 35%, 70% 80%, 30% 95%, 5% 40%); background:var(--glx2); transform:translate(-55%,-50%) scale(1.2); }
+    57%{  clip-path:polygon(20% 15%, 80% 10%, 92% 60%, 65% 92%, 15% 80%); background:var(--glx); transform:translate(-50%,-50%) scale(1); }
+    83%{  opacity:.9; }
+    84%{  opacity:.3; background:var(--glx3); }
+    86%{  opacity:.9; background:var(--glx); }
+    100%{ clip-path:polygon(20% 15%, 80% 10%, 92% 60%, 65% 92%, 15% 80%); background:var(--glx); opacity:.9; transform:translate(-50%,-50%) scale(1); }
+  }
+
+  /* full-orb flash frames - the whole thing blows out white/colour for one step,
+     like a dropped frame */
   .week-ring-orb-glow{
-    position:absolute; inset:13px; border-radius:50%; z-index:0; pointer-events:none;
-    background:radial-gradient(circle,
-      transparent 0%, transparent 20%,
-      rgba(255,138,30,.32) 40%, rgba(196,42,107,.2) 62%, transparent 80%);
-    animation: discGlow 3.4s ease-in-out infinite;
+    position:absolute; inset:13px; border-radius:50%; z-index:4; pointer-events:none;
+    background:var(--glx); mix-blend-mode:screen; opacity:0;
+    animation: dropFrame 3.7s steps(1) infinite;
   }
-  .week-ring-wrap.complete .week-ring-orb-glow{
-    background:radial-gradient(circle,
-      transparent 0%, transparent 20%,
-      rgba(57,217,122,.32) 40%, rgba(31,174,96,.2) 62%, transparent 80%);
-  }
-  @keyframes discGlow{
-    0%,100%{ opacity:.5; }
-    50%{     opacity:.85; }
+  .week-ring-wrap.complete .week-ring-orb-glow{ background:var(--glow-green); }
+  @keyframes dropFrame{
+    0%,100%{ opacity:0; }
+    12%{ opacity:0; }
+    12.6%{ opacity:.5; background:var(--glx2); }
+    13%{ opacity:0; }
+    40%{ opacity:0; }
+    40.5%{ opacity:.6; background:var(--glx); }
+    41%{ opacity:0; }
+    41.4%{ opacity:.35; background:var(--glx3); }
+    42%{ opacity:0; }
+    73%{ opacity:0; }
+    73.5%{ opacity:.55; background:var(--glx2); }
+    74%{ opacity:0; }
   }
 
   /* The glass shell, lit only from within by the accretion disc. Breathes with the pulse.
      No outside light: no specular, no bright-from-above rim - just the inner glow. */
   .week-ring-orb::after{
-    content:''; position:absolute; inset:0; border-radius:50%; z-index:4; pointer-events:none;
+    content:''; position:absolute; inset:0; border-radius:50%; z-index:5; pointer-events:none;
     box-shadow:
-      inset 0 0 0 1px rgba(255,210,150,.34),
-      inset 0 0 9px 1px rgba(255,138,30,.4);
-    animation: shellLit 3.4s ease-in-out infinite;
+      inset 0 0 0 1px rgba(0,229,255,.3),
+      inset 0 0 8px 1px rgba(0,229,255,.35);
+    animation: shellLit 2.3s steps(1) infinite;
   }
   .week-ring-wrap.complete .week-ring-orb::after{
     box-shadow:
-      inset 0 0 0 1px rgba(214,255,232,.34),
-      inset 0 0 9px 1px rgba(57,217,122,.4);
+      inset 0 0 0 1px rgba(57,217,122,.3),
+      inset 0 0 8px 1px rgba(57,217,122,.35);
   }
   @keyframes shellLit{
-    0%,100%{ opacity:.3; }
-    50%{     opacity:.7; }
+    0%{ opacity:.5; }
+    18%{ opacity:.2; }
+    19%{ opacity:.8; }
+    40%{ opacity:.35; }
+    55%{ opacity:.6; }
+    56%{ opacity:.15; }
+    72%{ opacity:.55; }
+    100%{ opacity:.5; }
   }
   .week-ring-label{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -675,9 +723,9 @@
      disabled above, the orb would sit there permanently empty, so show a single bolt
      statically instead of nothing. */
   @media (prefers-reduced-motion: reduce){
-    .orb-bolts{ opacity:1; }
-    .week-ring-orb-spark{ opacity:1; }
-    .week-ring-orb-glow{ opacity:.7; }
+    .glitch-bars{ opacity:.7; }
+    .week-ring-orb-spark{ opacity:.9; }
+    .glitch-rgb, .week-ring-orb-glow{ opacity:0; }
     .week-ring-orb::after{ opacity:.5; }
   }
 </style>
@@ -1113,7 +1161,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-blackhole';
+const APP_BUILD = '2026-07-17-glitch';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2139,31 +2187,11 @@ function renderHome(){
         </svg>
         <div class="week-ring-orb-glow"></div>
         <div class="week-ring-orb">
+          <div class="glitch-bars"></div>
           <div class="week-ring-orb-spark"></div>
-          <svg class="orb-bolts" viewBox="0 0 100 100" aria-hidden="true">
-            <g class="orb-bolts-spin">
-              <g class="arm a0">
-                <g class="halo" filter="url(#boltGlow)"><path d="M88.00,50.00L86.88,52.09L85.68,54.06L84.40,55.91L83.06,57.62L81.67,59.22L80.22,60.69L78.74,62.04L77.23,63.27L75.70,64.38L74.15,65.37L72.59,66.24L71.03,67.01L69.47,67.66L67.93,68.21L66.40,68.66L64.88,69.02L63.40,69.27L61.94,69.44L60.52,69.53L59.13,69.53L57.79,69.46L56.49,69.31L55.23,69.10L54.03,68.83L52.87,68.49L51.77,68.10L50.72,67.67L49.73,67.19L48.79,66.66L47.91,66.11L47.08,65.52L46.31,64.90L45.60,64.26L44.95,63.59L44.35,62.91L43.80,62.22L43.31,61.52L42.88,60.81L42.49,60.10L42.16,59.39L41.87,58.68L41.63,57.98L41.44,57.28L41.29,56.60L41.19,55.92L41.12,55.26L41.09,54.62L41.10,53.99L41.14,53.38L41.22,52.80L41.32,52.23L41.46,51.69L41.62,51.17L41.80,50.67L42.00,50.20L42.23,49.75L42.47,49.33L42.73,48.94L43.00,48.57L43.29,48.23"/></g>
-                <g class="core"><path d="M88.00,50.00L86.88,52.09L85.68,54.06L84.40,55.91L83.06,57.62L81.67,59.22L80.22,60.69L78.74,62.04L77.23,63.27L75.70,64.38L74.15,65.37L72.59,66.24L71.03,67.01L69.47,67.66L67.93,68.21L66.40,68.66L64.88,69.02L63.40,69.27L61.94,69.44L60.52,69.53L59.13,69.53L57.79,69.46L56.49,69.31L55.23,69.10L54.03,68.83L52.87,68.49L51.77,68.10L50.72,67.67L49.73,67.19L48.79,66.66L47.91,66.11L47.08,65.52L46.31,64.90L45.60,64.26L44.95,63.59L44.35,62.91L43.80,62.22L43.31,61.52L42.88,60.81L42.49,60.10L42.16,59.39L41.87,58.68L41.63,57.98L41.44,57.28L41.29,56.60L41.19,55.92L41.12,55.26L41.09,54.62L41.10,53.99L41.14,53.38L41.22,52.80L41.32,52.23L41.46,51.69L41.62,51.17L41.80,50.67L42.00,50.20L42.23,49.75L42.47,49.33L42.73,48.94L43.00,48.57L43.29,48.23"/></g>
-              </g>
-              <g class="arm a1">
-                <g class="halo" filter="url(#boltGlow)"><path d="M61.74,86.14L59.41,85.72L57.16,85.18L55.01,84.54L52.96,83.80L51.02,82.96L49.17,82.05L47.43,81.06L45.80,80.00L44.27,78.88L42.85,77.72L41.53,76.51L40.32,75.26L39.22,73.98L38.22,72.68L37.32,71.36L36.51,70.03L35.81,68.70L35.20,67.37L34.68,66.04L34.25,64.72L33.90,63.42L33.64,62.14L33.45,60.88L33.34,59.65L33.30,58.45L33.33,57.28L33.42,56.15L33.57,55.05L33.78,54.00L34.04,52.99L34.34,52.02L34.69,51.10L35.08,50.22L35.51,49.40L35.97,48.62L36.46,47.88L36.98,47.20L37.52,46.57L38.07,45.98L38.65,45.44L39.23,44.95L39.83,44.51L40.43,44.11L41.04,43.76L41.64,43.45L42.25,43.18L42.86,42.96L43.45,42.77L44.05,42.62L44.63,42.51L45.20,42.44L45.76,42.40L46.30,42.39L46.83,42.41L47.34,42.46L47.83,42.53L48.31,42.63L48.76,42.76L49.20,42.90L49.61,43.07"/></g>
-                <g class="core"><path d="M61.74,86.14L59.41,85.72L57.16,85.18L55.01,84.54L52.96,83.80L51.02,82.96L49.17,82.05L47.43,81.06L45.80,80.00L44.27,78.88L42.85,77.72L41.53,76.51L40.32,75.26L39.22,73.98L38.22,72.68L37.32,71.36L36.51,70.03L35.81,68.70L35.20,67.37L34.68,66.04L34.25,64.72L33.90,63.42L33.64,62.14L33.45,60.88L33.34,59.65L33.30,58.45L33.33,57.28L33.42,56.15L33.57,55.05L33.78,54.00L34.04,52.99L34.34,52.02L34.69,51.10L35.08,50.22L35.51,49.40L35.97,48.62L36.46,47.88L36.98,47.20L37.52,46.57L38.07,45.98L38.65,45.44L39.23,44.95L39.83,44.51L40.43,44.11L41.04,43.76L41.64,43.45L42.25,43.18L42.86,42.96L43.45,42.77L44.05,42.62L44.63,42.51L45.20,42.44L45.76,42.40L46.30,42.39L46.83,42.41L47.34,42.46L47.83,42.53L48.31,42.63L48.76,42.76L49.20,42.90L49.61,43.07"/></g>
-              </g>
-              <g class="arm a2">
-                <g class="halo" filter="url(#boltGlow)"><path d="M19.26,72.34L18.93,69.98L18.75,67.68L18.70,65.44L18.77,63.26L18.96,61.15L19.26,59.12L19.67,57.15L20.17,55.27L20.76,53.48L21.43,51.76L22.18,50.14L22.99,48.60L23.86,47.16L24.79,45.80L25.76,44.54L26.78,43.36L27.83,42.28L28.91,41.29L30.01,40.38L31.13,39.57L32.26,38.84L33.40,38.19L34.54,37.62L35.68,37.14L36.81,36.73L37.93,36.39L39.03,36.13L40.12,35.94L41.18,35.81L42.23,35.74L43.24,35.73L44.23,35.78L45.18,35.88L46.10,36.03L46.98,36.23L47.83,36.47L48.64,36.75L49.41,37.07L50.14,37.41L50.83,37.79L51.47,38.20L52.08,38.63L52.64,39.08L53.17,39.55L53.65,40.03L54.09,40.52L54.49,41.03L54.85,41.54L55.18,42.06L55.46,42.58L55.71,43.10L55.92,43.61L56.10,44.13L56.24,44.64L56.35,45.14L56.43,45.63L56.48,46.11L56.51,46.59L56.50,47.05L56.47,47.49"/></g>
-                <g class="core"><path d="M19.26,72.34L18.93,69.98L18.75,67.68L18.70,65.44L18.77,63.26L18.96,61.15L19.26,59.12L19.67,57.15L20.17,55.27L20.76,53.48L21.43,51.76L22.18,50.14L22.99,48.60L23.86,47.16L24.79,45.80L25.76,44.54L26.78,43.36L27.83,42.28L28.91,41.29L30.01,40.38L31.13,39.57L32.26,38.84L33.40,38.19L34.54,37.62L35.68,37.14L36.81,36.73L37.93,36.39L39.03,36.13L40.12,35.94L41.18,35.81L42.23,35.74L43.24,35.73L44.23,35.78L45.18,35.88L46.10,36.03L46.98,36.23L47.83,36.47L48.64,36.75L49.41,37.07L50.14,37.41L50.83,37.79L51.47,38.20L52.08,38.63L52.64,39.08L53.17,39.55L53.65,40.03L54.09,40.52L54.49,41.03L54.85,41.54L55.18,42.06L55.46,42.58L55.71,43.10L55.92,43.61L56.10,44.13L56.24,44.64L56.35,45.14L56.43,45.63L56.48,46.11L56.51,46.59L56.50,47.05L56.47,47.49"/></g>
-              </g>
-              <g class="arm a3">
-                <g class="halo" filter="url(#boltGlow)"><path d="M19.26,27.66L21.39,26.63L23.52,25.74L25.64,25.00L27.74,24.40L29.80,23.93L31.83,23.59L33.82,23.36L35.77,23.26L37.66,23.26L39.49,23.37L41.27,23.58L42.98,23.88L44.63,24.26L46.20,24.73L47.71,25.26L49.14,25.87L50.49,26.53L51.77,27.25L52.97,28.02L54.09,28.83L55.14,29.68L56.10,30.56L56.99,31.47L57.81,32.40L58.54,33.35L59.21,34.31L59.80,35.28L60.32,36.26L60.77,37.23L61.16,38.20L61.48,39.16L61.74,40.11L61.94,41.05L62.08,41.97L62.16,42.87L62.20,43.75L62.18,44.61L62.12,45.44L62.01,46.24L61.86,47.01L61.68,47.75L61.46,48.46L61.20,49.14L60.92,49.78L60.61,50.39L60.28,50.96L59.92,51.50L59.55,52.00L59.15,52.47L58.75,52.90L58.33,53.30L57.90,53.66L57.47,53.98L57.03,54.28L56.59,54.54L56.14,54.77L55.70,54.96L55.26,55.13L54.82,55.27L54.39,55.38"/></g>
-                <g class="core"><path d="M19.26,27.66L21.39,26.63L23.52,25.74L25.64,25.00L27.74,24.40L29.80,23.93L31.83,23.59L33.82,23.36L35.77,23.26L37.66,23.26L39.49,23.37L41.27,23.58L42.98,23.88L44.63,24.26L46.20,24.73L47.71,25.26L49.14,25.87L50.49,26.53L51.77,27.25L52.97,28.02L54.09,28.83L55.14,29.68L56.10,30.56L56.99,31.47L57.81,32.40L58.54,33.35L59.21,34.31L59.80,35.28L60.32,36.26L60.77,37.23L61.16,38.20L61.48,39.16L61.74,40.11L61.94,41.05L62.08,41.97L62.16,42.87L62.20,43.75L62.18,44.61L62.12,45.44L62.01,46.24L61.86,47.01L61.68,47.75L61.46,48.46L61.20,49.14L60.92,49.78L60.61,50.39L60.28,50.96L59.92,51.50L59.55,52.00L59.15,52.47L58.75,52.90L58.33,53.30L57.90,53.66L57.47,53.98L57.03,54.28L56.59,54.54L56.14,54.77L55.70,54.96L55.26,55.13L54.82,55.27L54.39,55.38"/></g>
-              </g>
-              <g class="arm a4">
-                <g class="halo" filter="url(#boltGlow)"><path d="M61.74,13.86L63.39,15.57L64.89,17.32L66.25,19.11L67.47,20.91L68.55,22.73L69.51,24.56L70.33,26.38L71.03,28.20L71.61,30.00L72.08,31.78L72.43,33.53L72.67,35.25L72.82,36.94L72.86,38.58L72.82,40.17L72.69,41.72L72.47,43.21L72.18,44.65L71.82,46.03L71.40,47.35L70.91,48.60L70.37,49.80L69.78,50.92L69.15,51.99L68.47,52.98L67.77,53.91L67.03,54.77L66.26,55.57L65.47,56.30L64.67,56.97L63.86,57.57L63.03,58.11L62.20,58.59L61.37,59.01L60.54,59.37L59.71,59.67L58.89,59.92L58.08,60.12L57.29,60.26L56.51,60.36L55.74,60.41L55.00,60.42L54.28,60.39L53.58,60.32L52.91,60.21L52.26,60.07L51.64,59.90L51.05,59.70L50.48,59.47L49.95,59.22L49.44,58.94L48.96,58.65L48.52,58.33L48.10,58.01L47.72,57.67L47.36,57.31L47.04,56.95L46.74,56.59L46.48,56.21L46.24,55.83"/></g>
-                <g class="core"><path d="M61.74,13.86L63.39,15.57L64.89,17.32L66.25,19.11L67.47,20.91L68.55,22.73L69.51,24.56L70.33,26.38L71.03,28.20L71.61,30.00L72.08,31.78L72.43,33.53L72.67,35.25L72.82,36.94L72.86,38.58L72.82,40.17L72.69,41.72L72.47,43.21L72.18,44.65L71.82,46.03L71.40,47.35L70.91,48.60L70.37,49.80L69.78,50.92L69.15,51.99L68.47,52.98L67.77,53.91L67.03,54.77L66.26,55.57L65.47,56.30L64.67,56.97L63.86,57.57L63.03,58.11L62.20,58.59L61.37,59.01L60.54,59.37L59.71,59.67L58.89,59.92L58.08,60.12L57.29,60.26L56.51,60.36L55.74,60.41L55.00,60.42L54.28,60.39L53.58,60.32L52.91,60.21L52.26,60.07L51.64,59.90L51.05,59.70L50.48,59.47L49.95,59.22L49.44,58.94L48.96,58.65L48.52,58.33L48.10,58.01L47.72,57.67L47.36,57.31L47.04,56.95L46.74,56.59L46.48,56.21L46.24,55.83"/></g>
-              </g>
-            </g>
-          </svg>
+          <div class="glitch-rgb">
+            <i class="r"></i><i class="g"></i><i class="b"></i>
+          </div>
         </div>
         <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
       </div>
