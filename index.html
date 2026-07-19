@@ -144,191 +144,128 @@
   }
   .week-ring-fill.complete{ stroke:var(--glow-green); }
 
-  /* ============ Glass orb ============
-     ONE light source: the bolts, inside. Nothing lights this ball from outside, so there
-     are no highlights, no bloom, no cast shadow and no bright rim - every one of those
-     would be a reflection of a lamp that does not exist. The glass is therefore invisible
-     between strikes and gets revealed by its own lightning: the shell edge below picks up
-     the light from within and flares in time with each strike.
+  /* ============ Reactor orb ============
+     Arc-reactor look: a bright core in the centre, three concentric ring/tick bands
+     around it (structural, mostly static), and an energy shockwave that fires outward
+     from the core through the rings on the pulse. The pulse keeps the double-heartbeat
+     rhythm from the very first version of this (lub around 7%, dub around 24%, then
+     rest) - only cheap transform/opacity animation, no per-frame pixel filters.
 
      Layer order (bottom -> top):
-       1. .week-ring-orb            glass body: unlit, uniformly dark
-       2. .core-blob                  the wobbling, colour-flickering blob core
-       3. .orb-bolts                the lightning channels themselves
-       4. .week-ring-orb::after     shell edge, lit from inside only
+       1. .week-ring-orb        glass body, unlit dark base
+       2. .reactor-glow         ambient bloom behind everything, breathes with the pulse
+       3. .reactor-rings        the three concentric ring/tick bands (mostly static)
+       4. .reactor-wave         two shockwave rings that expand outward on each beat
+       5. .reactor-core         the bright core itself
+       6. .week-ring-orb::after thin containing edge, lit from within only
   */
+  :root{ --rx:#4fd3ff; --rx-hot:#eafcff; --rx-deep:#0f6fb0; }
+
   .week-ring-orb{
     position:absolute; inset:13px; border-radius:50%; z-index:1; overflow:hidden;
-    background:radial-gradient(circle at 50% 50%, #0a0d12, #05070a 100%);
-    backdrop-filter:contrast(130%) brightness(.6);
-    -webkit-backdrop-filter:contrast(130%) brightness(.6);
+    background:radial-gradient(circle at 50% 50%, #0a1218, #050a0d 100%);
   }
 
-  /* --- Glitch: something inside the glass is broken. No smooth loops - everything moves
-         on jittery, asymmetric, prime-ish timings so nothing ever lines up and the eye
-         can't predict it. That unpredictability is what reads as "wrong". --- */
-  :root{ --glx:#00e5ff; --glx2:#ff003c; --glx3:#e8ff00; }
-
-  .orb-bolts{
-    position:absolute; inset:0; width:100%; height:100%; z-index:2;
-    pointer-events:none; overflow:hidden;
-    border-radius:50%;
+  /* ambient bloom, breathing with the pulse - gives the core somewhere to glow into */
+  .reactor-glow{
+    position:absolute; inset:0; border-radius:50%; z-index:0; pointer-events:none;
+    background:radial-gradient(circle, var(--rx) 0%, rgba(15,111,176,.25) 45%, transparent 72%);
+    mix-blend-mode:screen;
+    animation: reactorHeartbeat 1.9s ease-out infinite;
+  }
+  .week-ring-wrap.complete .reactor-glow{
+    background:radial-gradient(circle, var(--glow-green) 0%, rgba(31,174,96,.25) 45%, transparent 72%);
   }
 
-  /* horizontal scanlines that tear and jump */
-  .arm{ transform-origin:50% 50%; }
-  .arm .halo path, .arm .core path{ display:none; }  /* paths unused in glitch mode */
-
-  /* datamosh bars: hard-edged colour bands that snap to new positions */
-  .glitch-bars{
-    position:absolute; inset:0; z-index:2; mix-blend-mode:screen;
-    background:
-      linear-gradient(0deg, transparent 0%, var(--glx) 0.5%, transparent 1.2%),
-      linear-gradient(0deg, transparent 0%, var(--glx2) 0.4%, transparent 1%),
-      linear-gradient(0deg, transparent 0%, var(--glx3) 0.3%, transparent 0.8%);
-    background-size:100% 33%, 100% 51%, 100% 27%;
-    background-position:0 10%, 0 60%, 0 35%;
-    animation: barsJump 2.7s steps(1) infinite;
+  /* the three ring/tick bands - structural, near-static (a faint independent shimmer
+     keeps them from feeling dead between beats) */
+  .reactor-rings{
+    position:absolute; inset:0; z-index:1; pointer-events:none;
   }
-  @keyframes barsJump{
-    0%{   background-position:0 8%, 0 61%, 0 33%; opacity:.8; }
-    9%{   background-position:0 72%, 0 20%, 0 88%; opacity:.4; }
-    14%{  background-position:0 34%, 0 90%, 0 12%; opacity:.9; }
-    22%{  background-position:0 55%, 0 5%, 0 66%; opacity:.3; }
-    23%{  background-position:0 55%, 0 5%, 0 66%; opacity:1; }
-    38%{  background-position:0 18%, 0 77%, 0 44%; opacity:.6; }
-    52%{  background-position:0 83%, 0 40%, 0 21%; opacity:.85; }
-    53%{  opacity:.1; }
-    54%{  opacity:.9; }
-    71%{  background-position:0 29%, 0 63%, 0 9%; opacity:.5; }
-    88%{  background-position:0 47%, 0 14%, 0 71%; opacity:.75; }
-    100%{ background-position:0 8%, 0 61%, 0 33%; opacity:.8; }
+  .reactor-rings circle{ fill:none; stroke:var(--rx); }
+  .reactor-rings line{ stroke:var(--rx); stroke-linecap:round; }
+  .reactor-rings .band-outer{ opacity:.55; animation:bandShimmer 4.3s ease-in-out infinite; }
+  .reactor-rings .band-mid{   opacity:.7;  animation:bandShimmer 3.7s ease-in-out infinite reverse; }
+  .reactor-rings .band-inner{ opacity:.85; animation:bandShimmer 3.1s ease-in-out infinite; }
+  .week-ring-wrap.complete .reactor-rings circle,
+  .week-ring-wrap.complete .reactor-rings line{ stroke:var(--glow-green); }
+  @keyframes bandShimmer{
+    0%,100%{ opacity:.55; }
+    50%{     opacity:.85; }
   }
 
-  /* RGB split: three offset copies of a bright core that don't quite align, tearing apart
-     and snapping back - the classic broken-signal chromatic aberration */
-  .glitch-rgb{
-    position:absolute; left:50%; top:50%; width:56%; height:56%;
+  /* shockwave: two rings expand from the core out past the bands and fade, firing on
+     the same beat as the core itself - this is the "energy pulsing outward" part */
+  .reactor-wave{
+    position:absolute; left:50%; top:50%; width:14%; height:14%;
     transform:translate(-50%,-50%);
-    z-index:3; pointer-events:none; mix-blend-mode:screen;
-    animation: rgbShift 1.9s steps(1) infinite;
+    border-radius:50%; z-index:2; pointer-events:none;
+    border:1.5px solid var(--rx);
+    animation: waveExpand 1.9s ease-out infinite;
   }
-  .glitch-rgb span{
-    position:absolute; inset:0; border-radius:6px;
-    font-family:'Oswald',sans-serif; font-weight:700;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .glitch-rgb i{
-    position:absolute; inset:18% 8%; border-radius:4px;
-  }
-  .glitch-rgb .r{ background:var(--glx2); mix-blend-mode:screen; }
-  .glitch-rgb .g{ background:var(--glx3); mix-blend-mode:screen; }
-  .glitch-rgb .b{ background:var(--glx);  mix-blend-mode:screen; }
-  @keyframes rgbShift{
-    0%{   transform:translate(-50%,-50%); filter:none; }
-    7%{   transform:translate(-44%,-53%) skewX(-8deg); }
-    8%{   transform:translate(-56%,-48%) skewX(9deg); }
-    15%{  transform:translate(-50%,-50%); }
-    43%{  transform:translate(-50%,-50%); }
-    44%{  transform:translate(-58%,-50%) skewX(14deg); }
-    46%{  transform:translate(-42%,-50%) skewX(-11deg); }
-    48%{  transform:translate(-50%,-50%); }
-    77%{  transform:translate(-50%,-50%); }
-    78%{  transform:translate(-51%,-58%); }
-    80%{  transform:translate(-49%,-42%); }
-    82%{  transform:translate(-50%,-50%); }
-    100%{ transform:translate(-50%,-50%); }
+  .reactor-wave.w2{ animation-delay:.55s; }
+  .week-ring-wrap.complete .reactor-wave{ border-color:var(--glow-green); }
+  @keyframes waveExpand{
+    0%{   transform:translate(-50%,-50%) scale(1);   opacity:0; }
+    4%{   opacity:.9; }
+    55%{  transform:translate(-50%,-50%) scale(5.4); opacity:0; }
+    100%{ transform:translate(-50%,-50%) scale(5.4); opacity:0; }
   }
 
-  /* the broken core: ONE single-piece shape with a genuinely irregular outline
-     (clip-path polygon with jittered vertices - not border-radius, which always reads
-     as a rounded rectangle, and not multiple overlapping blobs, which regress back
-     toward a smooth/symmetric union once they overlap enough - both were tried and
-     both still looked rectangular). clip-path polygon animation is native CSS,
-     verified to actually interpolate here (unlike SVG SMIL path animation, which does
-     not run in this environment at all), and costs nothing extra per frame (no pixel
-     filter, just a clip mask) - confirmed to hold 60fps. */
-  .core-blob{
-    position:absolute; left:50%; top:50%; width:60%; height:60%;
-    transform:translate(-50%,-50%);
-    z-index:2; pointer-events:none; mix-blend-mode:screen;
-    background:var(--glx);
-    clip-path:polygon(98.1% 50.0%, 92.4% 80.8%, 70.7% 100.0%, 35.0% 96.2%, 9.3% 79.6%, 0.0% 50.0%, 19.8% 28.0%, 34.4% 2.0%, 67.1% 0.0%, 99.9% 13.7%);
-    animation: coreMorph 3.3s ease-in-out infinite, coreFlicker 1.3s steps(1) infinite;
-    filter:blur(1.5px);
+  /* the core: bright, sharp, double-heartbeat pulse (lub ~7%, dub ~24%, rest) */
+  .reactor-core{
+    position:absolute; left:50%; top:50%; width:30%; height:30%;
+    transform:translate(-50%,-50%) scale(.7);
+    border-radius:50%; z-index:3; pointer-events:none;
+    background:radial-gradient(circle, var(--rx-hot) 0%, var(--rx) 45%, var(--rx-deep) 72%, transparent 88%);
+    box-shadow:0 0 6px 1px rgba(79,211,255,.6);
+    animation: reactorHeartbeat 1.9s ease-out infinite;
   }
-  .week-ring-wrap.complete .core-blob{ background:var(--glow-green) !important; }
-
-  @keyframes coreMorph{
-    0%{   clip-path:polygon(98.1% 50.0%, 92.4% 80.8%, 70.7% 100.0%, 35.0% 96.2%, 9.3% 79.6%, 0.0% 50.0%, 19.8% 28.0%, 34.4% 2.0%, 67.1% 0.0%, 99.9% 13.7%); }
-    20%{  clip-path:polygon(100.0% 50.0%, 78.8% 70.9%, 59.6% 79.4%, 28.4% 100.0%, 19.8% 72.0%, 15.2% 50.0%, 4.6% 17.1%, 36.5% 8.3%, 70.3% 0.0%, 81.8% 26.9%); }
-    40%{  clip-path:polygon(100.0% 50.0%, 94.7% 82.5%, 69.4% 100.0%, 37.3% 89.1%, 4.6% 83.0%, 0.0% 50.0%, 0.0% 11.0%, 38.4% 14.4%, 67.3% 0.0%, 94.2% 17.9%); }
-    60%{  clip-path:polygon(96.3% 50.0%, 91.8% 80.4%, 69.9% 100.0%, 38.5% 85.3%, 18.4% 72.9%, 18.8% 50.0%, 22.0% 29.6%, 40.6% 21.1%, 61.2% 15.5%, 90.9% 20.3%); }
-    80%{  clip-path:polygon(83.6% 50.0%, 100.0% 90.0%, 61.1% 84.2%, 31.6% 100.0%, 0.0% 87.4%, 0.0% 50.0%, 16.0% 25.3%, 36.4% 8.1%, 68.2% 0.0%, 100.0% 9.7%); }
-    100%{ clip-path:polygon(98.1% 50.0%, 92.4% 80.8%, 70.7% 100.0%, 35.0% 96.2%, 9.3% 79.6%, 0.0% 50.0%, 19.8% 28.0%, 34.4% 2.0%, 67.1% 0.0%, 99.9% 13.7%); }
+  .week-ring-wrap.complete .reactor-core{
+    background:radial-gradient(circle, #eafff2 0%, var(--glow-green) 45%, #1a8a52 72%, transparent 88%);
+    box-shadow:0 0 6px 1px rgba(57,217,122,.6);
   }
-
-  @keyframes coreFlicker{
-    0%{   background:var(--glx);  opacity:.85; }
-    11%{  background:var(--glx2); opacity:.65; }
-    12%{  background:var(--glx3); opacity:1; }
-    27%{  background:var(--glx);  opacity:.5; }
-    30%{  background:var(--glx);  opacity:.9; }
-    54%{  background:var(--glx);  opacity:.8; }
-    55%{  background:var(--glx2); opacity:.85; }
-    57%{  background:var(--glx);  opacity:.85; }
-    84%{  background:var(--glx);  opacity:.4; }
-    86%{  background:var(--glx);  opacity:.85; }
-    100%{ background:var(--glx);  opacity:.85; }
+  @keyframes reactorHeartbeat{
+    0%{    opacity:.55; transform:translate(-50%,-50%) scale(.7); }
+    7%{    opacity:1;   transform:translate(-50%,-50%) scale(1.05); }
+    15%{   opacity:.62; transform:translate(-50%,-50%) scale(.78); }
+    24%{   opacity:.95; transform:translate(-50%,-50%) scale(.98); }
+    38%{   opacity:.55; transform:translate(-50%,-50%) scale(.7); }
+    100%{  opacity:.55; transform:translate(-50%,-50%) scale(.7); }
+  }
+  /* .reactor-glow shares the same keyframe but is a plain div (no transform needed on
+     a full-bleed gradient) - override to animate opacity only there */
+  .reactor-glow{ animation-name:reactorGlowBeat; }
+  @keyframes reactorGlowBeat{
+    0%{   opacity:.35; }
+    7%{   opacity:.75; }
+    15%{  opacity:.4; }
+    24%{  opacity:.65; }
+    38%{  opacity:.35; }
+    100%{ opacity:.35; }
   }
 
-  /* full-orb flash frames - the whole thing blows out white/colour for one step,
-     like a dropped frame */
-  .week-ring-orb-glow{
-    position:absolute; inset:13px; border-radius:50%; z-index:4; pointer-events:none;
-    background:var(--glx); mix-blend-mode:screen; opacity:0;
-    animation: dropFrame 3.7s steps(1) infinite;
-  }
-  .week-ring-wrap.complete .week-ring-orb-glow{ background:var(--glow-green); }
-  @keyframes dropFrame{
-    0%,100%{ opacity:0; }
-    12%{ opacity:0; }
-    12.6%{ opacity:.5; background:var(--glx2); }
-    13%{ opacity:0; }
-    40%{ opacity:0; }
-    40.5%{ opacity:.6; background:var(--glx); }
-    41%{ opacity:0; }
-    41.4%{ opacity:.35; background:var(--glx3); }
-    42%{ opacity:0; }
-    73%{ opacity:0; }
-    73.5%{ opacity:.55; background:var(--glx2); }
-    74%{ opacity:0; }
-  }
-
-  /* The glass shell, lit only from within by the accretion disc. Breathes with the pulse.
-     No outside light: no specular, no bright-from-above rim - just the inner glow. */
   .week-ring-orb::after{
-    content:''; position:absolute; inset:0; border-radius:50%; z-index:5; pointer-events:none;
+    content:''; position:absolute; inset:0; border-radius:50%; z-index:4; pointer-events:none;
     box-shadow:
-      inset 0 0 0 1px rgba(0,229,255,.3),
-      inset 0 0 8px 1px rgba(0,229,255,.35);
-    animation: shellLit 2.3s steps(1) infinite;
+      inset 0 0 0 1px rgba(180,230,255,.3),
+      inset 0 0 8px 1px rgba(79,211,255,.35);
+    animation: shellLit 1.9s ease-out infinite;
   }
   .week-ring-wrap.complete .week-ring-orb::after{
     box-shadow:
-      inset 0 0 0 1px rgba(57,217,122,.3),
+      inset 0 0 0 1px rgba(214,255,232,.3),
       inset 0 0 8px 1px rgba(57,217,122,.35);
   }
   @keyframes shellLit{
-    0%{ opacity:.5; }
-    18%{ opacity:.2; }
-    19%{ opacity:.8; }
-    40%{ opacity:.35; }
-    55%{ opacity:.6; }
-    56%{ opacity:.15; }
-    72%{ opacity:.55; }
-    100%{ opacity:.5; }
+    0%{    opacity:.3; }
+    7%{    opacity:.65; }
+    15%{   opacity:.35; }
+    24%{   opacity:.55; }
+    38%{   opacity:.3; }
+    100%{  opacity:.3; }
   }
+
   .week-ring-label{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     font-family:'Oswald',sans-serif; font-weight:700; font-size:15px;
@@ -744,10 +681,12 @@
      disabled above, the orb would sit there permanently empty, so show a single bolt
      statically instead of nothing. */
   @media (prefers-reduced-motion: reduce){
-    .glitch-bars{ opacity:.7; }
-    .core-blob{ animation:none !important; opacity:.9; }
-    .glitch-rgb, .week-ring-orb-glow{ opacity:0; }
-    .week-ring-orb::after{ opacity:.5; }
+    .reactor-glow{ animation:none !important; opacity:.55; }
+    .reactor-rings circle, .reactor-rings line{ animation:none !important; }
+    .reactor-rings .band-outer, .reactor-rings .band-mid, .reactor-rings .band-inner{ opacity:.75; }
+    .reactor-wave{ animation:none !important; opacity:0; }
+    .reactor-core{ animation:none !important; opacity:.85; transform:translate(-50%,-50%) scale(.9); }
+    .week-ring-orb::after{ animation:none !important; opacity:.5; }
   }
 </style>
 </head>
@@ -1169,7 +1108,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-clipblob';
+const APP_BUILD = '2026-07-17-reactor';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2193,13 +2132,72 @@ function renderHome(){
           <circle class="week-ring-track" cx="50" cy="50" r="42"/>
           <circle class="week-ring-fill${pct >= 100 ? ' complete' : ''}" cx="50" cy="50" r="42" data-target-pct="${pct}"/>
         </svg>
-        <div class="week-ring-orb-glow"></div>
         <div class="week-ring-orb">
-          <div class="glitch-bars"></div>
-          <div class="core-blob"></div>
-          <div class="glitch-rgb">
-            <i class="r"></i><i class="g"></i><i class="b"></i>
-          </div>
+          <div class="reactor-glow"></div>
+          <svg class="reactor-rings" viewBox="0 0 100 100">
+            <g class="band-outer">
+              <circle cx="50" cy="50" r="34" stroke-width="1.1"/>
+              <line x1="82.40" y1="50.00" x2="85.60" y2="50.00"/>
+              <line x1="81.30" y1="58.39" x2="84.39" y2="59.21"/>
+              <line x1="78.06" y1="66.20" x2="80.83" y2="67.80"/>
+              <line x1="72.91" y1="72.91" x2="75.17" y2="75.17"/>
+              <line x1="66.20" y1="78.06" x2="67.80" y2="80.83"/>
+              <line x1="58.39" y1="81.30" x2="59.21" y2="84.39"/>
+              <line x1="50.00" y1="82.40" x2="50.00" y2="85.60"/>
+              <line x1="41.61" y1="81.30" x2="40.79" y2="84.39"/>
+              <line x1="33.80" y1="78.06" x2="32.20" y2="80.83"/>
+              <line x1="27.09" y1="72.91" x2="24.83" y2="75.17"/>
+              <line x1="21.94" y1="66.20" x2="19.17" y2="67.80"/>
+              <line x1="18.70" y1="58.39" x2="15.61" y2="59.21"/>
+              <line x1="17.60" y1="50.00" x2="14.40" y2="50.00"/>
+              <line x1="18.70" y1="41.61" x2="15.61" y2="40.79"/>
+              <line x1="21.94" y1="33.80" x2="19.17" y2="32.20"/>
+              <line x1="27.09" y1="27.09" x2="24.83" y2="24.83"/>
+              <line x1="33.80" y1="21.94" x2="32.20" y2="19.17"/>
+              <line x1="41.61" y1="18.70" x2="40.79" y2="15.61"/>
+              <line x1="50.00" y1="17.60" x2="50.00" y2="14.40"/>
+              <line x1="58.39" y1="18.70" x2="59.21" y2="15.61"/>
+              <line x1="66.20" y1="21.94" x2="67.80" y2="19.17"/>
+              <line x1="72.91" y1="27.09" x2="75.17" y2="24.83"/>
+              <line x1="78.06" y1="33.80" x2="80.83" y2="32.20"/>
+              <line x1="81.30" y1="41.61" x2="84.39" y2="40.79"/>
+            </g>
+            <g class="band-mid">
+              <circle cx="50" cy="50" r="25" stroke-width="1"/>
+              <line x1="73.24" y1="54.62" x2="75.79" y2="55.13"/>
+              <line x1="69.71" y1="63.17" x2="71.87" y2="64.61"/>
+              <line x1="63.17" y1="69.71" x2="64.61" y2="71.87"/>
+              <line x1="54.62" y1="73.24" x2="55.13" y2="75.79"/>
+              <line x1="45.38" y1="73.24" x2="44.87" y2="75.79"/>
+              <line x1="36.83" y1="69.71" x2="35.39" y2="71.87"/>
+              <line x1="30.29" y1="63.17" x2="28.13" y2="64.61"/>
+              <line x1="26.76" y1="54.62" x2="24.21" y2="55.13"/>
+              <line x1="26.76" y1="45.38" x2="24.21" y2="44.87"/>
+              <line x1="30.29" y1="36.83" x2="28.13" y2="35.39"/>
+              <line x1="36.83" y1="30.29" x2="35.39" y2="28.13"/>
+              <line x1="45.38" y1="26.76" x2="44.87" y2="24.21"/>
+              <line x1="54.62" y1="26.76" x2="55.13" y2="24.21"/>
+              <line x1="63.17" y1="30.29" x2="64.61" y2="28.13"/>
+              <line x1="69.71" y1="36.83" x2="71.87" y2="35.39"/>
+              <line x1="73.24" y1="45.38" x2="75.79" y2="44.87"/>
+            </g>
+            <g class="band-inner">
+              <circle cx="50" cy="50" r="16" stroke-width=".9"/>
+              <line x1="64.90" y1="50.00" x2="67.10" y2="50.00"/>
+              <line x1="62.05" y1="58.76" x2="63.83" y2="60.05"/>
+              <line x1="54.60" y1="64.17" x2="55.28" y2="66.26"/>
+              <line x1="45.40" y1="64.17" x2="44.72" y2="66.26"/>
+              <line x1="37.95" y1="58.76" x2="36.17" y2="60.05"/>
+              <line x1="35.10" y1="50.00" x2="32.90" y2="50.00"/>
+              <line x1="37.95" y1="41.24" x2="36.17" y2="39.95"/>
+              <line x1="45.40" y1="35.83" x2="44.72" y2="33.74"/>
+              <line x1="54.60" y1="35.83" x2="55.28" y2="33.74"/>
+              <line x1="62.05" y1="41.24" x2="63.83" y2="39.95"/>
+            </g>
+          </svg>
+          <div class="reactor-wave"></div>
+          <div class="reactor-wave w2"></div>
+          <div class="reactor-core"></div>
         </div>
         <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
       </div>
