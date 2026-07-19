@@ -240,31 +240,42 @@
     100%{ transform:translate(-50%,-50%); }
   }
 
-  /* the broken core: a jittering shape that flickers between colours and sizes, never
-     settling. Uses the spark element. */
+  /* the broken core: a soft, wobbling blob of light that morphs its outline and drifts,
+     flickering between the glitch colours. border-radius animation gives the amorphous,
+     lava-lamp-ish "wabern"; it never holds a shape, which keeps it unsettling. */
   .week-ring-orb-spark{
-    position:absolute; left:50%; top:50%; width:40%; height:40%;
+    position:absolute; left:50%; top:50%; width:52%; height:52%;
     transform:translate(-50%,-50%);
-    z-index:3; pointer-events:none; mix-blend-mode:screen;
-    background:var(--glx);
-    clip-path:polygon(20% 15%, 80% 10%, 92% 60%, 65% 92%, 15% 80%);
-    animation: coreGlitch 1.3s steps(1) infinite;
+    z-index:2; pointer-events:none; mix-blend-mode:screen;
+    background:radial-gradient(circle at 50% 50%, var(--glx) 0%, var(--glx) 42%, rgba(0,229,255,.35) 66%, transparent 82%);
+    border-radius:50% 50% 50% 50%;
+    filter:blur(2px);
+    animation: coreWobble 3.3s ease-in-out infinite, coreFlicker 1.3s steps(1) infinite;
   }
-  .week-ring-wrap.complete .week-ring-orb-spark{ background:var(--glow-green); }
-  @keyframes coreGlitch{
-    0%{   clip-path:polygon(20% 15%, 80% 10%, 92% 60%, 65% 92%, 15% 80%); background:var(--glx); opacity:.9; transform:translate(-50%,-50%) scale(1); }
-    11%{  clip-path:polygon(35% 8%, 70% 22%, 88% 45%, 55% 78%, 8% 62%); background:var(--glx2); opacity:.6; transform:translate(-53%,-48%) scale(1.15); }
-    12%{  clip-path:polygon(10% 30%, 90% 12%, 78% 70%, 48% 88%, 22% 55%); background:var(--glx3); opacity:1; transform:translate(-47%,-52%) scale(.85); }
-    27%{  clip-path:polygon(20% 15%, 80% 10%, 92% 60%, 65% 92%, 15% 80%); background:var(--glx); opacity:.75; transform:translate(-50%,-50%) scale(1.05); }
-    28%{  opacity:.15; }
-    30%{  opacity:.85; }
-    54%{  clip-path:polygon(28% 20%, 75% 18%, 85% 55%, 60% 85%, 18% 72%); background:var(--glx); opacity:.9; transform:translate(-50%,-50%) scale(1); }
-    55%{  clip-path:polygon(40% 5%, 95% 35%, 70% 80%, 30% 95%, 5% 40%); background:var(--glx2); transform:translate(-55%,-50%) scale(1.2); }
-    57%{  clip-path:polygon(20% 15%, 80% 10%, 92% 60%, 65% 92%, 15% 80%); background:var(--glx); transform:translate(-50%,-50%) scale(1); }
-    83%{  opacity:.9; }
-    84%{  opacity:.3; background:var(--glx3); }
-    86%{  opacity:.9; background:var(--glx); }
-    100%{ clip-path:polygon(20% 15%, 80% 10%, 92% 60%, 65% 92%, 15% 80%); background:var(--glx); opacity:.9; transform:translate(-50%,-50%) scale(1); }
+  .week-ring-wrap.complete .week-ring-orb-spark{
+    background:radial-gradient(circle at 50% 50%, var(--glow-green) 0%, var(--glow-green) 42%, rgba(57,217,122,.35) 66%, transparent 82%);
+  }
+  /* morph the blob outline + drift it slightly off-centre and back */
+  @keyframes coreWobble{
+    0%{   border-radius:58% 42% 55% 45% / 48% 55% 45% 52%; transform:translate(-50%,-50%) scale(1)    rotate(0deg); }
+    22%{  border-radius:44% 56% 38% 62% / 60% 42% 58% 40%; transform:translate(-53%,-47%) scale(1.08) rotate(30deg); }
+    45%{  border-radius:62% 38% 60% 40% / 40% 62% 38% 60%; transform:translate(-47%,-52%) scale(.92)  rotate(-20deg); }
+    68%{  border-radius:40% 60% 52% 48% / 55% 38% 62% 45%; transform:translate(-51%,-49%) scale(1.05) rotate(18deg); }
+    100%{ border-radius:58% 42% 55% 45% / 48% 55% 45% 52%; transform:translate(-50%,-50%) scale(1)    rotate(0deg); }
+  }
+  /* independent colour flicker on the glitch beat */
+  @keyframes coreFlicker{
+    0%{   background:radial-gradient(circle at 50% 50%, var(--glx) 0%, var(--glx) 42%, rgba(0,229,255,.35) 66%, transparent 82%); opacity:.85; }
+    11%{  background:radial-gradient(circle at 50% 50%, var(--glx2) 0%, var(--glx2) 42%, rgba(255,0,60,.35) 66%, transparent 82%); opacity:.65; }
+    12%{  background:radial-gradient(circle at 50% 50%, var(--glx3) 0%, var(--glx3) 42%, rgba(232,255,0,.35) 66%, transparent 82%); opacity:1; }
+    27%{  opacity:.5; }
+    30%{  opacity:.9; }
+    54%{  background:radial-gradient(circle at 50% 50%, var(--glx) 0%, var(--glx) 42%, rgba(0,229,255,.35) 66%, transparent 82%); opacity:.8; }
+    55%{  background:radial-gradient(circle at 50% 50%, var(--glx2) 0%, var(--glx2) 42%, rgba(255,0,60,.35) 66%, transparent 82%); }
+    57%{  background:radial-gradient(circle at 50% 50%, var(--glx) 0%, var(--glx) 42%, rgba(0,229,255,.35) 66%, transparent 82%); }
+    84%{  opacity:.4; }
+    86%{  opacity:.85; }
+    100%{ opacity:.85; }
   }
 
   /* full-orb flash frames - the whole thing blows out white/colour for one step,
@@ -317,7 +328,13 @@
   .week-ring-label{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     font-family:'Oswald',sans-serif; font-weight:700; font-size:15px;
-    text-shadow:0 1px 2px rgba(0,0,0,.5); z-index:3;
+    color:#fff; z-index:6;
+    /* dark halo on all sides so the digits stay legible over bright, moving glitch colours */
+    text-shadow:
+      0 0 3px rgba(0,0,0,.95), 0 0 3px rgba(0,0,0,.95),
+      0 1px 2px rgba(0,0,0,1),
+      1px 0 2px rgba(0,0,0,.9), -1px 0 2px rgba(0,0,0,.9),
+      0 -1px 2px rgba(0,0,0,.9);
   }
   .week-card-info{flex:1; min-width:0;}
   .week-card-label{font-size:12px; color:var(--text-2); font-weight:600; letter-spacing:.02em; margin-bottom:6px;}
@@ -1161,7 +1178,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-glitch';
+const APP_BUILD = '2026-07-17-glitchblob';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
