@@ -192,85 +192,87 @@
   .eye-flame{
     fill:url(#flameGrad);
     filter:blur(.6px);
+    animation-iteration-count:infinite;
+    animation-timing-function:ease-in-out;
   }
   .week-ring-wrap.complete .eye-flame{ fill:url(#flameGradComplete) !important; }
   .eye-flame.f0{
-    transform-box:view-box; transform-origin:50px 43px;
+    transform-box:view-box; transform-origin:50px 43.4px;
     animation-name:flameFlicker0;
-    animation-duration:2.71s;
-    animation-delay:-1.82s;
+    animation-duration:2.37s;
+    animation-delay:-2.38s;
   }
   .eye-flame.f1{
-    transform-box:view-box; transform-origin:50px 43px;
+    transform-box:view-box; transform-origin:50px 42.6px;
     animation-name:flameFlicker1;
-    animation-duration:2.33s;
-    animation-delay:-0.24s;
+    animation-duration:2.17s;
+    animation-delay:-0.66s;
   }
   .eye-flame.f2{
-    transform-box:view-box; transform-origin:50px 43px;
+    transform-box:view-box; transform-origin:50px 41.6px;
     animation-name:flameFlicker2;
-    animation-duration:3.53s;
-    animation-delay:-2.13s;
+    animation-duration:3.31s;
+    animation-delay:-2.04s;
   }
   .eye-flame.f3{
-    transform-box:view-box; transform-origin:50px 43px;
+    transform-box:view-box; transform-origin:50px 42.2px;
     animation-name:flameFlicker0;
-    animation-duration:2.61s;
-    animation-delay:-2.92s;
+    animation-duration:2.29s;
+    animation-delay:-1.98s;
   }
   .eye-flame.f4{
-    transform-box:view-box; transform-origin:50px 43px;
+    transform-box:view-box; transform-origin:50px 43.3px;
     animation-name:flameFlicker1;
-    animation-duration:3.01s;
-    animation-delay:-0.61s;
+    animation-duration:3.36s;
+    animation-delay:-0.6s;
   }
   .eye-flame.f5{
-    transform-box:view-box; transform-origin:50px 43px;
+    transform-box:view-box; transform-origin:50px 42.8px;
     animation-name:flameFlicker2;
-    animation-duration:2.49s;
-    animation-delay:-0.2s;
+    animation-duration:3.32s;
+    animation-delay:-2.9s;
   }
   .eye-flame.f6{
-    transform-box:view-box; transform-origin:50px 43px;
+    transform-box:view-box; transform-origin:50px 41.1px;
     animation-name:flameFlicker0;
-    animation-duration:2.62s;
-    animation-delay:-1.54s;
-  }
-  .eye-flame.f7{
-    transform-box:view-box; transform-origin:50px 43px;
-    animation-name:flameFlicker1;
-    animation-duration:3.43s;
-    animation-delay:-1.79s;
-  }
-  .eye-flame.f8{
-    transform-box:view-box; transform-origin:50px 43px;
-    animation-name:flameFlicker2;
-    animation-duration:3.26s;
-    animation-delay:-1.42s;
-  }
-  .eye-flame.f9{
-    transform-box:view-box; transform-origin:50px 43px;
-    animation-name:flameFlicker0;
-    animation-duration:3.0s;
-    animation-delay:-2.6s;
-  }
-  .eye-flame.f10{
-    transform-box:view-box; transform-origin:50px 43px;
-    animation-name:flameFlicker1;
-    animation-duration:2.84s;
+    animation-duration:3.03s;
     animation-delay:-1.97s;
   }
-  .eye-flame.f11{
-    transform-box:view-box; transform-origin:50px 43px;
+  .eye-flame.f7{
+    transform-box:view-box; transform-origin:50px 43.1px;
+    animation-name:flameFlicker1;
+    animation-duration:2.53s;
+    animation-delay:-0.91s;
+  }
+  .eye-flame.f8{
+    transform-box:view-box; transform-origin:50px 42.7px;
     animation-name:flameFlicker2;
-    animation-duration:3.18s;
-    animation-delay:-0.21s;
+    animation-duration:3.34s;
+    animation-delay:-0.25s;
+  }
+  .eye-flame.f9{
+    transform-box:view-box; transform-origin:50px 42.8px;
+    animation-name:flameFlicker0;
+    animation-duration:2.85s;
+    animation-delay:-0.39s;
+  }
+  .eye-flame.f10{
+    transform-box:view-box; transform-origin:50px 42.3px;
+    animation-name:flameFlicker1;
+    animation-duration:2.93s;
+    animation-delay:-1.22s;
+  }
+  .eye-flame.f11{
+    transform-box:view-box; transform-origin:50px 41.3px;
+    animation-name:flameFlicker2;
+    animation-duration:2.47s;
+    animation-delay:-0.01s;
   }
   .eye-flame.f12{
-    transform-box:view-box; transform-origin:50px 43px;
+    transform-box:view-box; transform-origin:50px 43.6px;
     animation-name:flameFlicker0;
-    animation-duration:3.14s;
-    animation-delay:-1.31s;
+    animation-duration:3.02s;
+    animation-delay:-2.36s;
   }
   @keyframes flameFlicker0{
     0%,100%{ opacity:.55; transform:scaleY(1)    scaleX(1); }
@@ -1233,7 +1235,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-eyeofsauron';
+const APP_BUILD = '2026-07-17-eyeofsauron-v2';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2260,44 +2262,44 @@ function renderHome(){
         <div class="week-ring-orb">
           <div class="reactor-glow"></div>
           <svg class="eye-flames" viewBox="0 0 100 100">
-            <g transform="rotate(-14.8 50 50)">
-              <path class="eye-flame f0" d="M44.55,43.00 Q48.64,34.65 50.00,26.30 Q51.36,34.65 55.45,43.00 Q50.00,45.73 44.55,43.00 Z"/>
+            <g transform="translate(50 50) rotate(3.2)">
+              <path class="eye-flame f0" d="M-7.80,-6.60 C-7.20,-15.38 -12.86,-22.90 -9.00,-27.50 C-6.86,-21.23 1.14,-12.87 7.80,-6.60 Q0,-3.48 -7.80,-6.60 Z"/>
             </g>
-            <g transform="rotate(18.700000000000003 50 50)">
-              <path class="eye-flame f1" d="M46.40,43.00 Q49.10,32.70 50.00,22.40 Q50.90,32.70 53.60,43.00 Q50.00,44.80 46.40,43.00 Z"/>
+            <g transform="translate(50 50) rotate(358.6)">
+              <path class="eye-flame f1" d="M-8.00,-7.40 C-5.08,-16.09 2.14,-23.55 6.10,-28.10 C8.30,-21.89 6.54,-13.61 8.00,-7.40 Q0,-4.20 -8.00,-7.40 Z"/>
             </g>
-            <g transform="rotate(46.5 50 50)">
-              <path class="eye-flame f2" d="M46.15,43.00 Q49.04,30.95 50.00,18.90 Q50.96,30.95 53.85,43.00 Q50.00,44.92 46.15,43.00 Z"/>
+            <g transform="translate(50 50) rotate(11.3)">
+              <path class="eye-flame f2" d="M-5.60,-8.40 C-3.64,-14.45 0.93,-19.63 3.70,-22.80 C5.24,-18.48 4.38,-12.72 5.60,-8.40 Q0,-6.16 -5.60,-8.40 Z"/>
             </g>
-            <g transform="rotate(71.6 50 50)">
-              <path class="eye-flame f3" d="M43.55,43.00 Q48.39,33.30 50.00,23.60 Q51.61,33.30 56.45,43.00 Q50.00,46.23 43.55,43.00 Z"/>
+            <g transform="translate(50 50) rotate(9.0)">
+              <path class="eye-flame f3" d="M-9.50,-7.80 C-8.14,-13.39 -11.50,-18.17 -6.80,-21.10 C-4.19,-17.11 2.85,-11.79 9.50,-7.80 Q0,-4.00 -9.50,-7.80 Z"/>
             </g>
-            <g transform="rotate(114.0 50 50)">
-              <path class="eye-flame f4" d="M45.55,43.00 Q48.89,34.85 50.00,26.70 Q51.11,34.85 54.45,43.00 Q50.00,45.23 45.55,43.00 Z"/>
+            <g transform="translate(50 50) rotate(140.2)">
+              <path class="eye-flame f4" d="M-9.60,-6.70 C-8.26,-15.94 -11.85,-23.86 -7.10,-28.70 C-4.46,-22.10 2.80,-13.30 9.60,-6.70 Q0,-2.86 -9.60,-6.70 Z"/>
             </g>
-            <g transform="rotate(128.5 50 50)">
-              <path class="eye-flame f5" d="M44.85,43.00 Q48.71,33.45 50.00,23.90 Q51.29,33.45 55.15,43.00 Q50.00,45.58 44.85,43.00 Z"/>
+            <g transform="translate(50 50) rotate(114.5)">
+              <path class="eye-flame f5" d="M-9.00,-7.20 C-5.58,-13.33 3.34,-18.59 7.80,-21.80 C10.28,-17.42 7.68,-11.58 9.00,-7.20 Q0,-3.60 -9.00,-7.20 Z"/>
             </g>
-            <g transform="rotate(171.4 50 50)">
-              <path class="eye-flame f6" d="M45.55,43.00 Q48.89,33.15 50.00,23.30 Q51.11,33.15 54.45,43.00 Q50.00,45.23 45.55,43.00 Z"/>
+            <g transform="translate(50 50) rotate(177.4)">
+              <path class="eye-flame f6" d="M-6.00,-8.90 C-5.03,-17.30 -6.47,-24.50 -3.50,-28.90 C-1.85,-22.90 2.08,-14.90 6.00,-8.90 Q0,-6.50 -6.00,-8.90 Z"/>
             </g>
-            <g transform="rotate(200.7 50 50)">
-              <path class="eye-flame f7" d="M45.75,43.00 Q48.94,31.65 50.00,20.30 Q51.06,31.65 54.25,43.00 Q50.00,45.12 45.75,43.00 Z"/>
+            <g transform="translate(50 50) rotate(182.7)">
+              <path class="eye-flame f7" d="M-7.80,-6.90 C-4.72,-13.58 3.64,-19.30 7.50,-22.80 C9.64,-18.03 6.92,-11.67 7.80,-6.90 Q0,-3.78 -7.80,-6.90 Z"/>
             </g>
-            <g transform="rotate(214.5 50 50)">
-              <path class="eye-flame f8" d="M43.55,43.00 Q48.39,33.90 50.00,24.80 Q51.61,33.90 56.45,43.00 Q50.00,46.23 43.55,43.00 Z"/>
+            <g transform="translate(50 50) rotate(203.1)">
+              <path class="eye-flame f8" d="M-9.50,-7.30 C-8.43,-15.49 -13.40,-22.51 -8.70,-26.80 C-6.09,-20.95 2.18,-13.15 9.50,-7.30 Q0,-3.50 -9.50,-7.30 Z"/>
             </g>
-            <g transform="rotate(248.39999999999998 50 50)">
-              <path class="eye-flame f9" d="M46.40,43.00 Q49.10,32.80 50.00,22.60 Q50.90,32.80 53.60,43.00 Q50.00,44.80 46.40,43.00 Z"/>
+            <g transform="translate(50 50) rotate(252.7)">
+              <path class="eye-flame f9" d="M-7.80,-7.20 C-6.87,-15.52 -10.66,-22.64 -6.80,-27.00 C-4.65,-21.06 1.91,-13.14 7.80,-7.20 Q0,-4.08 -7.80,-7.20 Z"/>
             </g>
-            <g transform="rotate(285.5 50 50)">
-              <path class="eye-flame f10" d="M44.40,43.00 Q48.60,33.75 50.00,24.50 Q51.40,33.75 55.60,43.00 Q50.00,45.80 44.40,43.00 Z"/>
+            <g transform="translate(50 50) rotate(254.8)">
+              <path class="eye-flame f10" d="M-6.20,-7.70 C-3.20,-16.31 6.63,-23.69 9.70,-28.20 C11.40,-22.05 6.80,-13.85 6.20,-7.70 Q0,-5.22 -6.20,-7.70 Z"/>
             </g>
-            <g transform="rotate(314.70000000000005 50 50)">
-              <path class="eye-flame f11" d="M45.10,43.00 Q48.77,30.30 50.00,17.60 Q51.23,30.30 54.90,43.00 Q50.00,45.45 45.10,43.00 Z"/>
+            <g transform="translate(50 50) rotate(242.3)">
+              <path class="eye-flame f11" d="M-9.00,-8.70 C-8.23,-17.90 -14.36,-25.78 -9.90,-30.60 C-7.43,-24.03 1.49,-15.27 9.00,-8.70 Q0,-5.10 -9.00,-8.70 Z"/>
             </g>
-            <g transform="rotate(328.7 50 50)">
-              <path class="eye-flame f12" d="M44.05,43.00 Q48.51,30.05 50.00,17.10 Q51.49,30.05 55.95,43.00 Q50.00,45.98 44.05,43.00 Z"/>
+            <g transform="translate(50 50) rotate(280.6)">
+              <path class="eye-flame f12" d="M-6.00,-6.40 C-3.33,-15.18 4.83,-22.70 7.80,-27.30 C9.45,-21.03 6.03,-12.67 6.00,-6.40 Q0,-4.00 -6.00,-6.40 Z"/>
             </g>
           </svg>
           <div class="reactor-wave"></div>
