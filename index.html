@@ -95,19 +95,9 @@
   .bottom-nav{
     position:fixed; left:0; right:0; bottom:0; z-index:50;
     background:rgba(20,21,25,.92); backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);
     border-top:1px solid var(--border);
     display:flex;
     padding:8px 8px calc(8px + var(--safe-b));
-    /* iOS Safari can visibly drag a fixed element along with the scroll while a
-       backdrop-filter is active on it, only snapping back once scrolling stops -
-       forcing its own compositing layer keeps it glued to the viewport during the
-       scroll itself instead of lagging behind. */
-    transform:translateZ(0);
-    -webkit-transform:translateZ(0);
-    will-change:transform;
-    backface-visibility:hidden;
-    -webkit-backface-visibility:hidden;
   }
   .bottom-nav.hidden{display:none;}
   .nav-item{
@@ -1245,7 +1235,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-navfix';
+const APP_BUILD = '2026-07-17-navfix-revert';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
