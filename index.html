@@ -49,13 +49,13 @@
     caret-color:var(--text);
   }
   html{background:var(--bg); color-scheme:dark;}
-  html,body{margin:0;padding:0;overscroll-behavior-y:none;}
+  html,body{margin:0;padding:0;overscroll-behavior-y:none; height:100%; overflow:hidden;}
   body{
     background:var(--bg);
     color:var(--text);
     font-family:'Inter',system-ui,sans-serif;
-    min-height:100vh;
-    min-height:100svh;
+    height:100vh;
+    height:100svh;
     color-scheme:dark;
   }
   .mono{font-family:'IBM Plex Mono',monospace;}
@@ -63,7 +63,15 @@
   button, input{font-family:inherit;}
   ::selection{background:var(--accent-soft-2);}
 
-  .screen{display:none;}
+  /* Scrolling deliberately does NOT happen on the document/body. In an installed
+     ("Add to Home Screen") iOS PWA, position:fixed elements can detach and scroll
+     away with the page once the document itself is the thing scrolling - a
+     long-standing WebKit standalone-mode bug. Confining scrolling to each screen's
+     own box instead means html/body never move, so .bottom-nav (a sibling of every
+     .screen, never nested inside the scrolling area) has no scrolling ancestor to
+     get dragged along with in the first place. */
+  .screen{display:none; height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain;}
+  .screen.active{display:block;}
   #screenHome{filter:url(#rippleFilter);}
   .ring-flash{animation:ringFlashOnce .45s ease-out;}
   @keyframes ringFlashOnce{
@@ -89,7 +97,6 @@
     0%{ transform:scale(1); opacity:.45; border-width:1.5px; }
     100%{ transform:scale(38); opacity:0; border-width:.5px; }
   }
-  .screen.active{display:block;}
 
   /* ---------- Bottom nav ---------- */
   .bottom-nav{
@@ -1235,7 +1242,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-navfix-revert';
+const APP_BUILD = '2026-07-17-scrollfix';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
