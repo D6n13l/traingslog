@@ -104,15 +104,15 @@
     background:rgba(20,21,25,.92); backdrop-filter:blur(14px);
     border-top:1px solid var(--border);
     display:flex;
-    padding:8px 8px calc(8px + var(--safe-b));
+    padding:4px 8px calc(4px + var(--safe-b));
   }
   .bottom-nav.hidden{display:none;}
   .nav-item{
-    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
-    background:none; border:none; color:var(--text-3); font-size:11px; font-weight:600;
-    padding:6px 0; cursor:pointer;
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:1px;
+    background:none; border:none; color:var(--text-3); font-size:10px; font-weight:600;
+    padding:3px 0; cursor:pointer;
   }
-  .nav-item svg{width:22px; height:22px;}
+  .nav-item svg{width:19px; height:19px;}
   .nav-item.active{color:var(--accent);}
 
   /* ---------- Home screen ---------- */
@@ -1242,7 +1242,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-scrollfix';
+const APP_BUILD = '2026-07-17-navcompact';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
