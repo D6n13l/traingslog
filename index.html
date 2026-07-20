@@ -159,7 +159,7 @@
        5. .reactor-core         the bright core itself
        6. .week-ring-orb::after thin containing edge, lit from within only
   */
-  :root{ --rx:#4fd3ff; --rx-hot:#eafcff; --rx-deep:#0f6fb0; }
+  :root{ --rx:#c41830; --rx-hot:#ff9c8a; --rx-deep:#2b0308; --rx-iris:#0a0002; }
 
   .week-ring-orb{
     position:absolute; inset:13px; border-radius:50%; z-index:1; overflow:hidden;
@@ -169,7 +169,7 @@
   /* ambient bloom, breathing with the pulse - gives the core somewhere to glow into */
   .reactor-glow{
     position:absolute; inset:0; border-radius:50%; z-index:0; pointer-events:none;
-    background:radial-gradient(circle, var(--rx) 0%, rgba(15,111,176,.25) 45%, transparent 72%);
+    background:radial-gradient(circle, var(--rx) 0%, rgba(43,3,8,.35) 45%, transparent 72%);
     mix-blend-mode:screen;
     animation: reactorHeartbeat 1.9s ease-out infinite;
   }
@@ -184,15 +184,37 @@
   }
   .reactor-rings circle{ fill:none; stroke:var(--rx); }
   .reactor-rings line{ stroke:var(--rx); stroke-linecap:round; }
-  .reactor-rings .band-outer{ opacity:.55; animation:bandShimmer 4.3s ease-in-out infinite; }
-  .reactor-rings .band-mid{   opacity:.7;  animation:bandShimmer 3.7s ease-in-out infinite reverse; }
-  .reactor-rings .band-inner{ opacity:.85; animation:bandShimmer 3.1s ease-in-out infinite; }
+  .reactor-rings .band-outer{ opacity:.5;  animation:bandFlicker1 4.7s steps(1) infinite; }
+  .reactor-rings .band-mid{   opacity:.65; animation:bandFlicker2 3.3s steps(1) infinite; }
+  .reactor-rings .band-inner{ opacity:.8;  animation:bandFlicker1 5.9s steps(1) infinite reverse; }
+  /* deliberately uneven, non-repeating-feeling flicker - like damaged wiring rather than
+     a calm shimmer; irregular percentages so the bands never sync with each other or
+     with the heartbeat */
+  @keyframes bandFlicker1{
+    0%{   opacity:.5; }
+    6%{   opacity:.18; }
+    9%{   opacity:.6; }
+    31%{  opacity:.42; }
+    34%{  opacity:.15; }
+    35%{  opacity:.55; }
+    62%{  opacity:.5; }
+    77%{  opacity:.2; }
+    80%{  opacity:.5; }
+    100%{ opacity:.5; }
+  }
+  @keyframes bandFlicker2{
+    0%{   opacity:.65; }
+    18%{  opacity:.28; }
+    21%{  opacity:.7; }
+    44%{  opacity:.65; }
+    58%{  opacity:.22; }
+    61%{  opacity:.68; }
+    89%{  opacity:.35; }
+    92%{  opacity:.65; }
+    100%{ opacity:.65; }
+  }
   .week-ring-wrap.complete .reactor-rings circle,
   .week-ring-wrap.complete .reactor-rings line{ stroke:var(--glow-green); }
-  @keyframes bandShimmer{
-    0%,100%{ opacity:.55; }
-    50%{     opacity:.85; }
-  }
 
   /* shockwave: two rings expand from the core out past the bands and fade, firing on
      the same beat as the core itself - this is the "energy pulsing outward" part */
@@ -218,12 +240,31 @@
     transform:translate(-50%,-50%) scale(.7);
     border-radius:50%; z-index:3; pointer-events:none;
     background:radial-gradient(circle, var(--rx-hot) 0%, var(--rx) 45%, var(--rx-deep) 72%, transparent 88%);
-    box-shadow:0 0 6px 1px rgba(79,211,255,.6);
+    box-shadow:0 0 6px 1px rgba(196,24,48,.6);
     animation: reactorHeartbeat 1.9s ease-out infinite;
   }
   .week-ring-wrap.complete .reactor-core{
     background:radial-gradient(circle, #eafff2 0%, var(--glow-green) 45%, #1a8a52 72%, transparent 88%);
     box-shadow:0 0 6px 1px rgba(57,217,122,.6);
+  }
+  /* the iris/pupil: a dark round core-within-the-core, off the main heartbeat timing
+     so its dilation feels involuntary rather than mechanical - like something watching
+     that breathes on its own rhythm, not in lockstep with the reactor pulse */
+  .reactor-core::after{
+    content:''; position:absolute; left:50%; top:50%;
+    width:46%; height:46%; border-radius:50%;
+    transform:translate(-50%,-50%) scale(1);
+    background:radial-gradient(circle, var(--rx-iris) 0%, var(--rx-iris) 62%, transparent 100%);
+    animation: irisDilate 4.1s ease-in-out infinite;
+  }
+  .week-ring-wrap.complete .reactor-core::after{
+    background:radial-gradient(circle, #041008 0%, #041008 62%, transparent 100%);
+  }
+  @keyframes irisDilate{
+    0%,100%{ transform:translate(-50%,-50%) scale(1); }
+    31%{     transform:translate(-50%,-50%) scale(.72); }
+    52%{     transform:translate(-50%,-50%) scale(1.12); }
+    78%{     transform:translate(-50%,-50%) scale(.85); }
   }
   @keyframes reactorHeartbeat{
     0%{    opacity:.55; transform:translate(-50%,-50%) scale(.7); }
@@ -248,8 +289,8 @@
   .week-ring-orb::after{
     content:''; position:absolute; inset:0; border-radius:50%; z-index:4; pointer-events:none;
     box-shadow:
-      inset 0 0 0 1px rgba(180,230,255,.3),
-      inset 0 0 8px 1px rgba(79,211,255,.35);
+      inset 0 0 0 1px rgba(255,190,190,.28),
+      inset 0 0 8px 1px rgba(196,24,48,.4);
     animation: shellLit 1.9s ease-out infinite;
   }
   .week-ring-wrap.complete .week-ring-orb::after{
@@ -1108,7 +1149,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-reactor';
+const APP_BUILD = '2026-07-17-reactor-ominous';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
