@@ -154,7 +154,7 @@
      Layer order (bottom -> top):
        1. .week-ring-orb        glass body, unlit dark base
        2. .reactor-glow         ambient bloom behind everything, breathes with the pulse
-       3. .reactor-rings        the three concentric ring/tick bands (mostly static)
+       3. .eye-flames          flame tongues wreathing the pupil
        4. .reactor-wave         two shockwave rings that expand outward on each beat
        5. .reactor-core         the bright core itself
        6. .week-ring-orb::after thin containing edge, lit from within only
@@ -177,44 +177,119 @@
     background:radial-gradient(circle, var(--glow-green) 0%, rgba(31,174,96,.25) 45%, transparent 72%);
   }
 
-  /* the three ring/tick bands - structural, near-static (a faint independent shimmer
-     keeps them from feeling dead between beats) */
-  .reactor-rings{
+  /* Eye of Sauron, adapted round: tongues of flame wreathing the pupil instead of the
+     technical ring/tick bands. Each tongue is an SVG path drawn pointing "up" in its own
+     local coordinates; the actual angle/lean is applied as an SVG transform ATTRIBUTE on
+     its wrapping <g> (not CSS), and the flicker animation only ever touches the path's
+     own CSS transform (scale) - kept on separate elements deliberately, because if the
+     static rotation and the animated scale lived on the same element's CSS `transform`,
+     the keyframes would overwrite the rotation every frame and the flames would spin
+     off to random angles instead of flickering in place. */
+  .eye-flames{
     position:absolute; inset:0; z-index:1; pointer-events:none;
+    mix-blend-mode:screen;
   }
-  .reactor-rings circle{ fill:none; stroke:var(--rx); }
-  .reactor-rings line{ stroke:var(--rx); stroke-linecap:round; }
-  .reactor-rings .band-outer{ opacity:.5;  animation:bandFlicker1 4.7s steps(1) infinite; }
-  .reactor-rings .band-mid{   opacity:.65; animation:bandFlicker2 3.3s steps(1) infinite; }
-  .reactor-rings .band-inner{ opacity:.8;  animation:bandFlicker1 5.9s steps(1) infinite reverse; }
-  /* deliberately uneven, non-repeating-feeling flicker - like damaged wiring rather than
-     a calm shimmer; irregular percentages so the bands never sync with each other or
-     with the heartbeat */
-  @keyframes bandFlicker1{
-    0%{   opacity:.5; }
-    6%{   opacity:.18; }
-    9%{   opacity:.6; }
-    31%{  opacity:.42; }
-    34%{  opacity:.15; }
-    35%{  opacity:.55; }
-    62%{  opacity:.5; }
-    77%{  opacity:.2; }
-    80%{  opacity:.5; }
-    100%{ opacity:.5; }
+  .eye-flame{
+    fill:url(#flameGrad);
+    filter:blur(.6px);
   }
-  @keyframes bandFlicker2{
-    0%{   opacity:.65; }
-    18%{  opacity:.28; }
-    21%{  opacity:.7; }
-    44%{  opacity:.65; }
-    58%{  opacity:.22; }
-    61%{  opacity:.68; }
-    89%{  opacity:.35; }
-    92%{  opacity:.65; }
-    100%{ opacity:.65; }
+  .week-ring-wrap.complete .eye-flame{ fill:url(#flameGradComplete) !important; }
+  .eye-flame.f0{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker0;
+    animation-duration:2.71s;
+    animation-delay:-1.82s;
   }
-  .week-ring-wrap.complete .reactor-rings circle,
-  .week-ring-wrap.complete .reactor-rings line{ stroke:var(--glow-green); }
+  .eye-flame.f1{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker1;
+    animation-duration:2.33s;
+    animation-delay:-0.24s;
+  }
+  .eye-flame.f2{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker2;
+    animation-duration:3.53s;
+    animation-delay:-2.13s;
+  }
+  .eye-flame.f3{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker0;
+    animation-duration:2.61s;
+    animation-delay:-2.92s;
+  }
+  .eye-flame.f4{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker1;
+    animation-duration:3.01s;
+    animation-delay:-0.61s;
+  }
+  .eye-flame.f5{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker2;
+    animation-duration:2.49s;
+    animation-delay:-0.2s;
+  }
+  .eye-flame.f6{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker0;
+    animation-duration:2.62s;
+    animation-delay:-1.54s;
+  }
+  .eye-flame.f7{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker1;
+    animation-duration:3.43s;
+    animation-delay:-1.79s;
+  }
+  .eye-flame.f8{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker2;
+    animation-duration:3.26s;
+    animation-delay:-1.42s;
+  }
+  .eye-flame.f9{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker0;
+    animation-duration:3.0s;
+    animation-delay:-2.6s;
+  }
+  .eye-flame.f10{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker1;
+    animation-duration:2.84s;
+    animation-delay:-1.97s;
+  }
+  .eye-flame.f11{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker2;
+    animation-duration:3.18s;
+    animation-delay:-0.21s;
+  }
+  .eye-flame.f12{
+    transform-box:view-box; transform-origin:50px 43px;
+    animation-name:flameFlicker0;
+    animation-duration:3.14s;
+    animation-delay:-1.31s;
+  }
+  @keyframes flameFlicker0{
+    0%,100%{ opacity:.55; transform:scaleY(1)    scaleX(1); }
+    30%{     opacity:.85; transform:scaleY(1.15) scaleX(.9); }
+    55%{     opacity:.4;  transform:scaleY(.85)  scaleX(1.05); }
+    80%{     opacity:.7;  transform:scaleY(1.05) scaleX(.95); }
+  }
+  @keyframes flameFlicker1{
+    0%,100%{ opacity:.5;  transform:scaleY(1)    scaleX(1); }
+    25%{     opacity:.3;  transform:scaleY(.82)  scaleX(1.08); }
+    50%{     opacity:.9;  transform:scaleY(1.2)  scaleX(.92); }
+    72%{     opacity:.55; transform:scaleY(.95)  scaleX(1); }
+  }
+  @keyframes flameFlicker2{
+    0%,100%{ opacity:.6;  transform:scaleY(1)    scaleX(1); }
+    18%{     opacity:.8;  transform:scaleY(1.1)  scaleX(.95); }
+    46%{     opacity:.35; transform:scaleY(.8)   scaleX(1.1); }
+    70%{     opacity:.75; transform:scaleY(1.08) scaleX(.9); }
+  }
 
   /* shockwave: two rings expand from the core out past the bands and fade, firing on
      the same beat as the core itself - this is the "energy pulsing outward" part */
@@ -723,8 +798,7 @@
      statically instead of nothing. */
   @media (prefers-reduced-motion: reduce){
     .reactor-glow{ animation:none !important; opacity:.55; }
-    .reactor-rings circle, .reactor-rings line{ animation:none !important; }
-    .reactor-rings .band-outer, .reactor-rings .band-mid, .reactor-rings .band-inner{ opacity:.75; }
+    .eye-flame{ animation:none !important; opacity:.65; }
     .reactor-wave{ animation:none !important; opacity:0; }
     .reactor-core{ animation:none !important; opacity:.85; transform:translate(-50%,-50%) scale(.9); }
     .week-ring-orb::after{ animation:none !important; opacity:.5; }
@@ -743,6 +817,16 @@
       <animate id="waveRadiusAnim" attributeName="r" values="6%;90%" dur="1.8s" begin="indefinite" fill="freeze"/>
     </radialGradient>
     <rect id="waveGradientRect" x="0" y="0" width="100%" height="100%" fill="url(#waveGradient)"/>
+    <linearGradient id="flameGrad" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#2b0308"/>
+      <stop offset="55%" stop-color="#c41830"/>
+      <stop offset="100%" stop-color="#ff9c8a"/>
+    </linearGradient>
+    <linearGradient id="flameGradComplete" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#1a8a52"/>
+      <stop offset="55%" stop-color="#39D97A"/>
+      <stop offset="100%" stop-color="#eafff2"/>
+    </linearGradient>
   </defs>
   <filter id="rippleFilter" x="-20%" y="-20%" width="140%" height="140%" primitiveUnits="objectBoundingBox">
     <feImage href="#waveGradientRect" x="0" y="0" width="1" height="1" result="waveMap" preserveAspectRatio="none"/>
@@ -1149,7 +1233,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-reactor-ominous';
+const APP_BUILD = '2026-07-17-eyeofsauron';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2175,65 +2259,45 @@ function renderHome(){
         </svg>
         <div class="week-ring-orb">
           <div class="reactor-glow"></div>
-          <svg class="reactor-rings" viewBox="0 0 100 100">
-            <g class="band-outer">
-              <circle cx="50" cy="50" r="34" stroke-width="1.1"/>
-              <line x1="82.40" y1="50.00" x2="85.60" y2="50.00"/>
-              <line x1="81.30" y1="58.39" x2="84.39" y2="59.21"/>
-              <line x1="78.06" y1="66.20" x2="80.83" y2="67.80"/>
-              <line x1="72.91" y1="72.91" x2="75.17" y2="75.17"/>
-              <line x1="66.20" y1="78.06" x2="67.80" y2="80.83"/>
-              <line x1="58.39" y1="81.30" x2="59.21" y2="84.39"/>
-              <line x1="50.00" y1="82.40" x2="50.00" y2="85.60"/>
-              <line x1="41.61" y1="81.30" x2="40.79" y2="84.39"/>
-              <line x1="33.80" y1="78.06" x2="32.20" y2="80.83"/>
-              <line x1="27.09" y1="72.91" x2="24.83" y2="75.17"/>
-              <line x1="21.94" y1="66.20" x2="19.17" y2="67.80"/>
-              <line x1="18.70" y1="58.39" x2="15.61" y2="59.21"/>
-              <line x1="17.60" y1="50.00" x2="14.40" y2="50.00"/>
-              <line x1="18.70" y1="41.61" x2="15.61" y2="40.79"/>
-              <line x1="21.94" y1="33.80" x2="19.17" y2="32.20"/>
-              <line x1="27.09" y1="27.09" x2="24.83" y2="24.83"/>
-              <line x1="33.80" y1="21.94" x2="32.20" y2="19.17"/>
-              <line x1="41.61" y1="18.70" x2="40.79" y2="15.61"/>
-              <line x1="50.00" y1="17.60" x2="50.00" y2="14.40"/>
-              <line x1="58.39" y1="18.70" x2="59.21" y2="15.61"/>
-              <line x1="66.20" y1="21.94" x2="67.80" y2="19.17"/>
-              <line x1="72.91" y1="27.09" x2="75.17" y2="24.83"/>
-              <line x1="78.06" y1="33.80" x2="80.83" y2="32.20"/>
-              <line x1="81.30" y1="41.61" x2="84.39" y2="40.79"/>
+          <svg class="eye-flames" viewBox="0 0 100 100">
+            <g transform="rotate(-14.8 50 50)">
+              <path class="eye-flame f0" d="M44.55,43.00 Q48.64,34.65 50.00,26.30 Q51.36,34.65 55.45,43.00 Q50.00,45.73 44.55,43.00 Z"/>
             </g>
-            <g class="band-mid">
-              <circle cx="50" cy="50" r="25" stroke-width="1"/>
-              <line x1="73.24" y1="54.62" x2="75.79" y2="55.13"/>
-              <line x1="69.71" y1="63.17" x2="71.87" y2="64.61"/>
-              <line x1="63.17" y1="69.71" x2="64.61" y2="71.87"/>
-              <line x1="54.62" y1="73.24" x2="55.13" y2="75.79"/>
-              <line x1="45.38" y1="73.24" x2="44.87" y2="75.79"/>
-              <line x1="36.83" y1="69.71" x2="35.39" y2="71.87"/>
-              <line x1="30.29" y1="63.17" x2="28.13" y2="64.61"/>
-              <line x1="26.76" y1="54.62" x2="24.21" y2="55.13"/>
-              <line x1="26.76" y1="45.38" x2="24.21" y2="44.87"/>
-              <line x1="30.29" y1="36.83" x2="28.13" y2="35.39"/>
-              <line x1="36.83" y1="30.29" x2="35.39" y2="28.13"/>
-              <line x1="45.38" y1="26.76" x2="44.87" y2="24.21"/>
-              <line x1="54.62" y1="26.76" x2="55.13" y2="24.21"/>
-              <line x1="63.17" y1="30.29" x2="64.61" y2="28.13"/>
-              <line x1="69.71" y1="36.83" x2="71.87" y2="35.39"/>
-              <line x1="73.24" y1="45.38" x2="75.79" y2="44.87"/>
+            <g transform="rotate(18.700000000000003 50 50)">
+              <path class="eye-flame f1" d="M46.40,43.00 Q49.10,32.70 50.00,22.40 Q50.90,32.70 53.60,43.00 Q50.00,44.80 46.40,43.00 Z"/>
             </g>
-            <g class="band-inner">
-              <circle cx="50" cy="50" r="16" stroke-width=".9"/>
-              <line x1="64.90" y1="50.00" x2="67.10" y2="50.00"/>
-              <line x1="62.05" y1="58.76" x2="63.83" y2="60.05"/>
-              <line x1="54.60" y1="64.17" x2="55.28" y2="66.26"/>
-              <line x1="45.40" y1="64.17" x2="44.72" y2="66.26"/>
-              <line x1="37.95" y1="58.76" x2="36.17" y2="60.05"/>
-              <line x1="35.10" y1="50.00" x2="32.90" y2="50.00"/>
-              <line x1="37.95" y1="41.24" x2="36.17" y2="39.95"/>
-              <line x1="45.40" y1="35.83" x2="44.72" y2="33.74"/>
-              <line x1="54.60" y1="35.83" x2="55.28" y2="33.74"/>
-              <line x1="62.05" y1="41.24" x2="63.83" y2="39.95"/>
+            <g transform="rotate(46.5 50 50)">
+              <path class="eye-flame f2" d="M46.15,43.00 Q49.04,30.95 50.00,18.90 Q50.96,30.95 53.85,43.00 Q50.00,44.92 46.15,43.00 Z"/>
+            </g>
+            <g transform="rotate(71.6 50 50)">
+              <path class="eye-flame f3" d="M43.55,43.00 Q48.39,33.30 50.00,23.60 Q51.61,33.30 56.45,43.00 Q50.00,46.23 43.55,43.00 Z"/>
+            </g>
+            <g transform="rotate(114.0 50 50)">
+              <path class="eye-flame f4" d="M45.55,43.00 Q48.89,34.85 50.00,26.70 Q51.11,34.85 54.45,43.00 Q50.00,45.23 45.55,43.00 Z"/>
+            </g>
+            <g transform="rotate(128.5 50 50)">
+              <path class="eye-flame f5" d="M44.85,43.00 Q48.71,33.45 50.00,23.90 Q51.29,33.45 55.15,43.00 Q50.00,45.58 44.85,43.00 Z"/>
+            </g>
+            <g transform="rotate(171.4 50 50)">
+              <path class="eye-flame f6" d="M45.55,43.00 Q48.89,33.15 50.00,23.30 Q51.11,33.15 54.45,43.00 Q50.00,45.23 45.55,43.00 Z"/>
+            </g>
+            <g transform="rotate(200.7 50 50)">
+              <path class="eye-flame f7" d="M45.75,43.00 Q48.94,31.65 50.00,20.30 Q51.06,31.65 54.25,43.00 Q50.00,45.12 45.75,43.00 Z"/>
+            </g>
+            <g transform="rotate(214.5 50 50)">
+              <path class="eye-flame f8" d="M43.55,43.00 Q48.39,33.90 50.00,24.80 Q51.61,33.90 56.45,43.00 Q50.00,46.23 43.55,43.00 Z"/>
+            </g>
+            <g transform="rotate(248.39999999999998 50 50)">
+              <path class="eye-flame f9" d="M46.40,43.00 Q49.10,32.80 50.00,22.60 Q50.90,32.80 53.60,43.00 Q50.00,44.80 46.40,43.00 Z"/>
+            </g>
+            <g transform="rotate(285.5 50 50)">
+              <path class="eye-flame f10" d="M44.40,43.00 Q48.60,33.75 50.00,24.50 Q51.40,33.75 55.60,43.00 Q50.00,45.80 44.40,43.00 Z"/>
+            </g>
+            <g transform="rotate(314.70000000000005 50 50)">
+              <path class="eye-flame f11" d="M45.10,43.00 Q48.77,30.30 50.00,17.60 Q51.23,30.30 54.90,43.00 Q50.00,45.45 45.10,43.00 Z"/>
+            </g>
+            <g transform="rotate(328.7 50 50)">
+              <path class="eye-flame f12" d="M44.05,43.00 Q48.51,30.05 50.00,17.10 Q51.49,30.05 55.95,43.00 Q50.00,45.98 44.05,43.00 Z"/>
             </g>
           </svg>
           <div class="reactor-wave"></div>
