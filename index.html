@@ -3,6 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<script>
+  /* Diagnostics on this device showed innerHeight/visualViewport.height report
+     812px while window.screen.height correctly reports 874px - a real 62pt
+     that iOS hides from the usual viewport APIs in this standalone PWA, even
+     though the space physically exists (confirmed: htmlH/bodyH/navBottom all
+     tracked innerHeight exactly, proving our own CSS was never the problem).
+     So instead of innerHeight/visualViewport, we source body's height from
+     screen.height directly, forcing the app to actually use the full screen. */
+  (function(){
+    function setAppHeight(){
+      var h = window.screen && window.screen.height ? window.screen.height : window.innerHeight;
+      document.documentElement.style.setProperty('--app-height', h + 'px');
+    }
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', setAppHeight);
+  })();
+</script>
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0E0F12">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -52,7 +70,7 @@
   html,body{margin:0;padding:0;overscroll-behavior-y:none; height:100%; overflow:hidden;}
   html{background:var(--bg);}
   body{
-    height:100%;
+    height:var(--app-height, 100%);
     display:flex;
     flex-direction:column;
     background:var(--bg);
@@ -1260,7 +1278,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-diagnostics';
+const APP_BUILD = '2026-07-21-screenheight-fix';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2178,7 +2196,7 @@ async function init(){
     diagEl.textContent =
       `innerH:${window.innerHeight} vvH:${vv!==null?Math.round(vv):'n/a'} screenH:${window.screen.height}\n` +
       `htmlH:${Math.round(htmlH)} bodyH:${Math.round(bodyH)} navBottom:${Math.round(navRect.bottom)}\n` +
-      `dpr:${window.devicePixelRatio}`;
+      `appHeightVar:${getComputedStyle(document.documentElement).getPropertyValue('--app-height')} dpr:${window.devicePixelRatio}`;
   }
   updateDiag();
   window.addEventListener('resize', updateDiag);
