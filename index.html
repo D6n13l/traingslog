@@ -53,10 +53,24 @@
   html{background:var(--bg);}
   body{
     height:100%;
+    display:flex;
+    flex-direction:column;
     background:var(--bg);
     color:var(--text);
     font-family:'Inter',system-ui,sans-serif;
     color-scheme:dark;
+  }
+  /* The bottom nav used to be position:fixed;bottom:0, which in this standalone
+     iOS PWA sits well above the true screen edge (WebKit appears to anchor fixed
+     elements to a shorter-than-actual viewport here, independent of body/html
+     height - measuring/changing body's height had no effect on it). Making the
+     nav a normal last child of a full-height flex column sidesteps that fixed-
+     positioning bug entirely: its position is now just "last item in the flex
+     box", which is governed by ordinary box layout, not viewport-anchoring. */
+  .screens-area{
+    flex:1;
+    min-height:0;
+    position:relative;
   }
   .mono{font-family:'IBM Plex Mono',monospace;}
   .display{font-family:'Oswald',sans-serif;}
@@ -100,7 +114,7 @@
 
   /* ---------- Bottom nav ---------- */
   .bottom-nav{
-    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    flex-shrink:0; z-index:50;
     background:rgba(20,21,25,.92); backdrop-filter:blur(14px);
     border-top:1px solid var(--border);
     display:flex;
@@ -130,7 +144,7 @@
   .home-question{
     font-size:14px; color:var(--text-2); margin:4px 2px 10px; line-height:1.4;
   }
-  .home-list{padding:14px 16px 100px;}
+  .home-list{padding:14px 16px 24px;}
 
   .week-card{
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
@@ -661,7 +675,7 @@
   /* ---------- History ---------- */
   .history-header{padding:calc(22px + var(--safe-t)) 20px 8px;}
   .history-header h1{font-family:'Oswald',sans-serif; font-size:24px; margin:4px 0 0; font-weight:700;}
-  .history-list{padding:14px 16px 100px;}
+  .history-list{padding:14px 16px 24px;}
   .history-filter{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;}
 
   .progress-card{
@@ -918,6 +932,7 @@
 </div>
 
 <!-- ============ HOME ============ -->
+<div id="screensArea" class="screens-area">
 <section id="screenHome" class="screen">
   <div class="home-header">
     <div class="eyebrow">Trainingslog</div>
@@ -999,6 +1014,7 @@
     <button id="builderSave">Training speichern</button>
   </div>
 </section>
+</div>
 
 <!-- ============ REST TIMER ============ -->
 <div class="timer-bar" id="timerBar">
@@ -1243,7 +1259,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-simplify-plus-versiontag';
+const APP_BUILD = '2026-07-21-flex-nav-nofixed';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
