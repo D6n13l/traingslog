@@ -3,37 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover, user-scalable=no">
-<script>
-  /* Measure the real, current window height and expose it as --app-height so the
-     app shell (see body{height:var(--app-height,100%)} in the stylesheet below)
-     never has to rely on vh/dvh, which iOS standalone PWAs mis-measure. Runs
-     synchronously here (before <body> renders) to avoid a flash of wrong size,
-     and again on resize/orientation change to stay correct after rotation.
-
-     On a cold launch from the home screen icon, iOS/WKWebView can initially
-     report a shorter height - as if Safari's own bottom bar still needed room -
-     and only corrects itself a moment later, WITHOUT firing a 'resize' event.
-     So besides the immediate read, we re-measure a few more times shortly after
-     (next frames, on 'load', and after a short delay) purely as a safety net to
-     catch that silent correction. */
-  (function(){
-    function setAppHeight(){
-      var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-      document.documentElement.style.setProperty('--app-height', h + 'px');
-    }
-    setAppHeight();
-    requestAnimationFrame(function(){
-      setAppHeight();
-      requestAnimationFrame(setAppHeight);
-    });
-    window.addEventListener('load', setAppHeight);
-    setTimeout(setAppHeight, 300);
-    setTimeout(setAppHeight, 1000);
-    window.addEventListener('resize', setAppHeight);
-    window.addEventListener('orientationchange', setAppHeight);
-    if(window.visualViewport){ window.visualViewport.addEventListener('resize', setAppHeight); }
-  })();
-</script>
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0E0F12">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -82,17 +51,8 @@
   html{background:var(--bg); color-scheme:dark;}
   html,body{margin:0;padding:0;overscroll-behavior-y:none; height:100%; overflow:hidden;}
   html{background:var(--bg);}
-  /* In an installed (standalone) iOS PWA, neither 100vh/100dvh NOR making body
-     itself position:fixed reliably match the true screen: the former mis-measures
-     the viewport, the latter breaks descendant position:fixed elements (bottom-nav,
-     finish-bar, timer-bar, etc.) because WebKit's standalone mode does not size
-     nested fixed elements against the true viewport once an ancestor is fixed too.
-     The reliable fix is to measure the real window height in JS and expose it as
-     --app-height (set once on load and kept in sync on resize/rotation below),
-     while body itself stays a normal, non-positioned, in-flow element so its
-     position:fixed children keep the true viewport as their containing block. */
   body{
-    height:var(--app-height, 100%);
+    height:100%;
     background:var(--bg);
     color:var(--text);
     font-family:'Inter',system-ui,sans-serif;
@@ -962,6 +922,7 @@
   <div class="home-header">
     <div class="eyebrow">Trainingslog</div>
     <h1 id="homeGreeting">Hey</h1>
+    <div id="buildTag" style="font-size:10px; color:var(--text-3); margin-top:6px; font-family:'IBM Plex Mono',monospace;"></div>
   </div>
   <div class="home-list" id="homeList"></div>
 </section>
@@ -1282,7 +1243,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-autoupdate-coldstart';
+const APP_BUILD = '2026-07-21-simplify-plus-versiontag';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2186,6 +2147,9 @@ async function init(){
 
   renderHome();
   showScreen('screenHome');
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const buildTagEl = document.getElementById('buildTag');
+  if(buildTagEl) buildTagEl.textContent = APP_BUILD + ' · ' + (isStandalone ? 'standalone' : 'browser');
   checkForUpdate(true);
 }
 document.addEventListener('visibilitychange', ()=>{
