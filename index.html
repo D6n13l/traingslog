@@ -938,6 +938,7 @@
     <div class="eyebrow">Trainingslog</div>
     <h1 id="homeGreeting">Hey</h1>
     <div id="buildTag" style="font-size:10px; color:var(--text-3); margin-top:6px; font-family:'IBM Plex Mono',monospace;"></div>
+    <div id="diagTag" style="font-size:10px; color:var(--text-3); margin-top:2px; font-family:'IBM Plex Mono',monospace; white-space:pre-line;"></div>
   </div>
   <div class="home-list" id="homeList"></div>
 </section>
@@ -1259,7 +1260,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-flex-nav-nofixed';
+const APP_BUILD = '2026-07-21-diagnostics';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2166,6 +2167,25 @@ async function init(){
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   const buildTagEl = document.getElementById('buildTag');
   if(buildTagEl) buildTagEl.textContent = APP_BUILD + ' · ' + (isStandalone ? 'standalone' : 'browser');
+  function updateDiag(){
+    const diagEl = document.getElementById('diagTag');
+    const nav = document.getElementById('bottomNav');
+    if(!diagEl || !nav) return;
+    const navRect = nav.getBoundingClientRect();
+    const htmlH = document.documentElement.getBoundingClientRect().height;
+    const bodyH = document.body.getBoundingClientRect().height;
+    const vv = window.visualViewport ? window.visualViewport.height : null;
+    diagEl.textContent =
+      `innerH:${window.innerHeight} vvH:${vv!==null?Math.round(vv):'n/a'} screenH:${window.screen.height}\n` +
+      `htmlH:${Math.round(htmlH)} bodyH:${Math.round(bodyH)} navBottom:${Math.round(navRect.bottom)}\n` +
+      `dpr:${window.devicePixelRatio}`;
+  }
+  updateDiag();
+  window.addEventListener('resize', updateDiag);
+  window.addEventListener('orientationchange', updateDiag);
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', updateDiag);
+  setTimeout(updateDiag, 500);
+  setTimeout(updateDiag, 1500);
   checkForUpdate(true);
 }
 document.addEventListener('visibilitychange', ()=>{
