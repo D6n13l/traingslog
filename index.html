@@ -1282,7 +1282,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-height-resettle';
+const APP_BUILD = '2026-07-21-autoupdate-coldstart';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2186,7 +2186,7 @@ async function init(){
 
   renderHome();
   showScreen('screenHome');
-  checkForUpdate();
+  checkForUpdate(true);
 }
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState === 'visible') checkForUpdate();
@@ -2195,10 +2195,22 @@ setInterval(()=>{ if(document.visibilityState === 'visible') checkForUpdate(); }
 
 let updateBannerShown = false;
 const UPDATE_CHECK_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
-async function checkForUpdate(){
+function hardReload(){
+  // A plain location.reload() can itself be served from GitHub's HTTP cache
+  // (raw/pages responses carry a Cache-Control max-age), which could reload
+  // the very same stale build and loop. Navigating to a fresh, never-seen
+  // cachebust URL guarantees an actual network fetch of the new content.
+  window.location.replace(window.location.href.split('?')[0].split('#')[0] + '?cachebust=' + Date.now());
+}
+async function checkForUpdate(isInitial){
   if(updateBannerShown) return;
-  const last = parseInt(localStorage.getItem('last_update_check') || '0', 10);
-  if(Date.now() - last < UPDATE_CHECK_INTERVAL_MS) return;
+  // On a fresh cold launch we always want the real answer, even if a previous
+  // session already checked within the last 3 minutes - otherwise a stale
+  // build can silently keep running indefinitely across relaunches.
+  if(!isInitial){
+    const last = parseInt(localStorage.getItem('last_update_check') || '0', 10);
+    if(Date.now() - last < UPDATE_CHECK_INTERVAL_MS) return;
+  }
   localStorage.setItem('last_update_check', String(Date.now()));
   try{
     const bustUrl = window.location.href.split('?')[0].split('#')[0] + '?cachebust=' + Date.now();
@@ -2206,7 +2218,15 @@ async function checkForUpdate(){
     const text = await res.text();
     const match = text.match(/const APP_BUILD = '([^']+)'/);
     if(match && match[1] !== APP_BUILD){
-      showUpdateBanner();
+      if(isInitial){
+        // Nothing has been interacted with yet at cold launch (any in-progress
+        // workout was already restored from storage above), so it's safe to
+        // just swap in the latest code immediately instead of showing a banner
+        // the person has to notice and tap.
+        hardReload();
+      } else {
+        showUpdateBanner();
+      }
     }
   }catch(e){ /* offline or blocked — ignore, not critical */ }
 }
@@ -2217,7 +2237,7 @@ function showUpdateBanner(){
   el.innerHTML = `<span>${t('update_available')}</span><button id="updateReloadBtn">${t('update_reload_btn')}</button>`;
   document.body.appendChild(el);
   document.getElementById('updateReloadBtn').onclick = ()=>{
-    window.location.reload();
+    hardReload();
   };
 }
 
