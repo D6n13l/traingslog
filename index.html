@@ -50,6 +50,7 @@
   }
   html{background:var(--bg); color-scheme:dark;}
   html,body{margin:0;padding:0;overscroll-behavior-y:none; height:100%; overflow:hidden;}
+  html{background:var(--bg);}
   body{
     background:var(--bg);
     color:var(--text);
@@ -1242,7 +1243,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-navcompact';
+const APP_BUILD = '2026-07-17-htmlbg';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
