@@ -51,12 +51,16 @@
   html{background:var(--bg); color-scheme:dark;}
   html,body{margin:0;padding:0;overscroll-behavior-y:none; height:100%; overflow:hidden;}
   html{background:var(--bg);}
+  /* In an installed (standalone) iOS PWA, 100dvh/100vh do not reliably match the
+     real screen, which made the fixed bottom-nav float up and the top safe-area
+     shift. Anchoring the whole app box with position:fixed; inset:0 makes it equal
+     the layout viewport (= the full screen) exactly, independent of vh/dvh quirks. */
   body{
+    position:fixed;
+    inset:0;
     background:var(--bg);
     color:var(--text);
     font-family:'Inter',system-ui,sans-serif;
-    height:100vh;
-    height:100dvh;
     color-scheme:dark;
   }
   .mono{font-family:'IBM Plex Mono',monospace;}
@@ -1243,7 +1247,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-dvhfix';
+const APP_BUILD = '2026-07-21-standalone-shell';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
