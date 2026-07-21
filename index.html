@@ -3,6 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<script>
+  /* Measure the real, current window height and expose it as --app-height so the
+     app shell (see body{height:var(--app-height,100%)} in the stylesheet below)
+     never has to rely on vh/dvh, which iOS standalone PWAs mis-measure. Runs
+     synchronously here (before <body> renders) to avoid a flash of wrong size,
+     and again on resize/orientation change to stay correct after rotation. */
+  (function(){
+    function setAppHeight(){
+      var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+      document.documentElement.style.setProperty('--app-height', h + 'px');
+    }
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', setAppHeight);
+    if(window.visualViewport){ window.visualViewport.addEventListener('resize', setAppHeight); }
+  })();
+</script>
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0E0F12">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -51,13 +68,17 @@
   html{background:var(--bg); color-scheme:dark;}
   html,body{margin:0;padding:0;overscroll-behavior-y:none; height:100%; overflow:hidden;}
   html{background:var(--bg);}
-  /* In an installed (standalone) iOS PWA, 100dvh/100vh do not reliably match the
-     real screen, which made the fixed bottom-nav float up and the top safe-area
-     shift. Anchoring the whole app box with position:fixed; inset:0 makes it equal
-     the layout viewport (= the full screen) exactly, independent of vh/dvh quirks. */
+  /* In an installed (standalone) iOS PWA, neither 100vh/100dvh NOR making body
+     itself position:fixed reliably match the true screen: the former mis-measures
+     the viewport, the latter breaks descendant position:fixed elements (bottom-nav,
+     finish-bar, timer-bar, etc.) because WebKit's standalone mode does not size
+     nested fixed elements against the true viewport once an ancestor is fixed too.
+     The reliable fix is to measure the real window height in JS and expose it as
+     --app-height (set once on load and kept in sync on resize/rotation below),
+     while body itself stays a normal, non-positioned, in-flow element so its
+     position:fixed children keep the true viewport as their containing block. */
   body{
-    position:fixed;
-    inset:0;
+    height:var(--app-height, 100%);
     background:var(--bg);
     color:var(--text);
     font-family:'Inter',system-ui,sans-serif;
@@ -1247,7 +1268,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-standalone-shell';
+const APP_BUILD = '2026-07-21-jsheight-fix';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
