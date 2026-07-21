@@ -3,24 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover, user-scalable=no">
-<script>
-  /* Diagnostics on this device showed innerHeight/visualViewport.height report
-     812px while window.screen.height correctly reports 874px - a real 62pt
-     that iOS hides from the usual viewport APIs in this standalone PWA, even
-     though the space physically exists (confirmed: htmlH/bodyH/navBottom all
-     tracked innerHeight exactly, proving our own CSS was never the problem).
-     So instead of innerHeight/visualViewport, we source body's height from
-     screen.height directly, forcing the app to actually use the full screen. */
-  (function(){
-    function setAppHeight(){
-      var h = window.screen && window.screen.height ? window.screen.height : window.innerHeight;
-      document.documentElement.style.setProperty('--app-height', h + 'px');
-    }
-    setAppHeight();
-    window.addEventListener('resize', setAppHeight);
-    window.addEventListener('orientationchange', setAppHeight);
-  })();
-</script>
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0E0F12">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -70,7 +52,7 @@
   html,body{margin:0;padding:0;overscroll-behavior-y:none; height:100%; overflow:hidden;}
   html{background:var(--bg);}
   body{
-    height:var(--app-height, 100%);
+    height:100%;
     display:flex;
     flex-direction:column;
     background:var(--bg);
@@ -183,217 +165,73 @@
   }
   .week-ring-fill.complete{ stroke:var(--glow-green); }
 
-  /* ============ Reactor orb ============
-     Arc-reactor look: a bright core in the centre, three concentric ring/tick bands
-     around it (structural, mostly static), and an energy shockwave that fires outward
-     from the core through the rings on the pulse. The pulse keeps the double-heartbeat
-     rhythm from the very first version of this (lub around 7%, dub around 24%, then
-     rest) - only cheap transform/opacity animation, no per-frame pixel filters.
+  /* ============ Weekly progress flame ============
+     A single flame icon sits in the centre of the ring, with a soft ambient
+     glow behind it and two expanding pulse rings - reads as "streak / energy
+     this week" rather than anything abstract. Kept deliberately simple:
+     one shape, one flicker animation, cheap transform/opacity only.
 
      Layer order (bottom -> top):
        1. .week-ring-orb        glass body, unlit dark base
-       2. .reactor-glow         ambient bloom behind everything, breathes with the pulse
-       3. .eye-flames          flame tongues wreathing the pupil
-       4. .reactor-wave         two shockwave rings that expand outward on each beat
-       5. .reactor-core         the bright core itself
-       6. .week-ring-orb::after thin containing edge, lit from within only
+       2. .ring-glow            ambient bloom behind everything, breathes with the pulse
+       3. .pulse-ring x2        two rings that expand outward from the flame on each beat
+       4. .flame-icon           the flame itself, flickering gently
+       5. .week-ring-orb::after thin containing edge, lit from within only
   */
-  :root{ --rx:#c41830; --rx-hot:#ff9c8a; --rx-deep:#2b0308; --rx-iris:#0a0002; }
+  :root{ --rx:#c41830; --rx-hot:#ff9c8a; --rx-deep:#2b0308; }
 
   .week-ring-orb{
     position:absolute; inset:13px; border-radius:50%; z-index:1; overflow:hidden;
     background:radial-gradient(circle at 50% 50%, #0a1218, #050a0d 100%);
   }
 
-  /* ambient bloom, breathing with the pulse - gives the core somewhere to glow into */
-  .reactor-glow{
+  /* ambient bloom, breathing with the pulse - gives the flame somewhere to glow into */
+  .ring-glow{
     position:absolute; inset:0; border-radius:50%; z-index:0; pointer-events:none;
     background:radial-gradient(circle, var(--rx) 0%, rgba(43,3,8,.35) 45%, transparent 72%);
     mix-blend-mode:screen;
-    animation: reactorHeartbeat 1.9s ease-out infinite;
+    animation: glowBeat 1.9s ease-out infinite;
   }
-  .week-ring-wrap.complete .reactor-glow{
+  .week-ring-wrap.complete .ring-glow{
     background:radial-gradient(circle, var(--glow-green) 0%, rgba(31,174,96,.25) 45%, transparent 72%);
   }
 
-  /* Eye of Sauron, adapted round: tongues of flame wreathing the pupil instead of the
-     technical ring/tick bands. Each tongue is an SVG path drawn pointing "up" in its own
-     local coordinates; the actual angle/lean is applied as an SVG transform ATTRIBUTE on
-     its wrapping <g> (not CSS), and the flicker animation only ever touches the path's
-     own CSS transform (scale) - kept on separate elements deliberately, because if the
-     static rotation and the animated scale lived on the same element's CSS `transform`,
-     the keyframes would overwrite the rotation every frame and the flames would spin
-     off to random angles instead of flickering in place. */
-  .eye-flames{
-    position:absolute; inset:0; z-index:1; pointer-events:none;
-    mix-blend-mode:screen;
-  }
-  .eye-flame{
+  .flame-icon-svg{ position:absolute; inset:0; z-index:2; pointer-events:none; }
+  .flame-icon{
     fill:url(#flameGrad);
-    filter:blur(.6px);
-    animation-iteration-count:infinite;
-    animation-timing-function:ease-in-out;
+    filter:drop-shadow(0 0 3px rgba(196,24,48,.55));
+    transform-box:fill-box; transform-origin:center;
+    animation: flameFlicker 2.6s ease-in-out infinite;
   }
-  .week-ring-wrap.complete .eye-flame{ fill:url(#flameGradComplete) !important; }
-  .eye-flame.f0{
-    transform-box:view-box; transform-origin:50px 43.4px;
-    animation-name:flameFlicker0;
-    animation-duration:2.37s;
-    animation-delay:-2.38s;
+  .week-ring-wrap.complete .flame-icon{
+    fill:url(#flameGradComplete) !important;
+    filter:drop-shadow(0 0 3px rgba(57,217,122,.55));
   }
-  .eye-flame.f1{
-    transform-box:view-box; transform-origin:50px 42.6px;
-    animation-name:flameFlicker1;
-    animation-duration:2.17s;
-    animation-delay:-0.66s;
-  }
-  .eye-flame.f2{
-    transform-box:view-box; transform-origin:50px 41.6px;
-    animation-name:flameFlicker2;
-    animation-duration:3.31s;
-    animation-delay:-2.04s;
-  }
-  .eye-flame.f3{
-    transform-box:view-box; transform-origin:50px 42.2px;
-    animation-name:flameFlicker0;
-    animation-duration:2.29s;
-    animation-delay:-1.98s;
-  }
-  .eye-flame.f4{
-    transform-box:view-box; transform-origin:50px 43.3px;
-    animation-name:flameFlicker1;
-    animation-duration:3.36s;
-    animation-delay:-0.6s;
-  }
-  .eye-flame.f5{
-    transform-box:view-box; transform-origin:50px 42.8px;
-    animation-name:flameFlicker2;
-    animation-duration:3.32s;
-    animation-delay:-2.9s;
-  }
-  .eye-flame.f6{
-    transform-box:view-box; transform-origin:50px 41.1px;
-    animation-name:flameFlicker0;
-    animation-duration:3.03s;
-    animation-delay:-1.97s;
-  }
-  .eye-flame.f7{
-    transform-box:view-box; transform-origin:50px 43.1px;
-    animation-name:flameFlicker1;
-    animation-duration:2.53s;
-    animation-delay:-0.91s;
-  }
-  .eye-flame.f8{
-    transform-box:view-box; transform-origin:50px 42.7px;
-    animation-name:flameFlicker2;
-    animation-duration:3.34s;
-    animation-delay:-0.25s;
-  }
-  .eye-flame.f9{
-    transform-box:view-box; transform-origin:50px 42.8px;
-    animation-name:flameFlicker0;
-    animation-duration:2.85s;
-    animation-delay:-0.39s;
-  }
-  .eye-flame.f10{
-    transform-box:view-box; transform-origin:50px 42.3px;
-    animation-name:flameFlicker1;
-    animation-duration:2.93s;
-    animation-delay:-1.22s;
-  }
-  .eye-flame.f11{
-    transform-box:view-box; transform-origin:50px 41.3px;
-    animation-name:flameFlicker2;
-    animation-duration:2.47s;
-    animation-delay:-0.01s;
-  }
-  .eye-flame.f12{
-    transform-box:view-box; transform-origin:50px 43.6px;
-    animation-name:flameFlicker0;
-    animation-duration:3.02s;
-    animation-delay:-2.36s;
-  }
-  @keyframes flameFlicker0{
-    0%,100%{ opacity:.55; transform:scaleY(1)    scaleX(1); }
-    30%{     opacity:.85; transform:scaleY(1.15) scaleX(.9); }
-    55%{     opacity:.4;  transform:scaleY(.85)  scaleX(1.05); }
-    80%{     opacity:.7;  transform:scaleY(1.05) scaleX(.95); }
-  }
-  @keyframes flameFlicker1{
-    0%,100%{ opacity:.5;  transform:scaleY(1)    scaleX(1); }
-    25%{     opacity:.3;  transform:scaleY(.82)  scaleX(1.08); }
-    50%{     opacity:.9;  transform:scaleY(1.2)  scaleX(.92); }
-    72%{     opacity:.55; transform:scaleY(.95)  scaleX(1); }
-  }
-  @keyframes flameFlicker2{
-    0%,100%{ opacity:.6;  transform:scaleY(1)    scaleX(1); }
-    18%{     opacity:.8;  transform:scaleY(1.1)  scaleX(.95); }
-    46%{     opacity:.35; transform:scaleY(.8)   scaleX(1.1); }
-    70%{     opacity:.75; transform:scaleY(1.08) scaleX(.9); }
+  @keyframes flameFlicker{
+    0%,100%{ opacity:.85; transform:scale(1)     ; }
+    30%{     opacity:1;   transform:scale(1.06)  ; }
+    55%{     opacity:.75; transform:scale(.94)   ; }
+    80%{     opacity:.92; transform:scale(1.02)  ; }
   }
 
-  /* shockwave: two rings expand from the core out past the bands and fade, firing on
-     the same beat as the core itself - this is the "energy pulsing outward" part */
-  .reactor-wave{
+  /* pulse rings: two rings expand from the flame outward and fade, firing on the
+     same beat as the flame itself - the "energy pulsing outward" part */
+  .pulse-ring{
     position:absolute; left:50%; top:50%; width:14%; height:14%;
     transform:translate(-50%,-50%);
-    border-radius:50%; z-index:2; pointer-events:none;
+    border-radius:50%; z-index:1; pointer-events:none;
     border:1.5px solid var(--rx);
     animation: waveExpand 1.9s ease-out infinite;
   }
-  .reactor-wave.w2{ animation-delay:.55s; }
-  .week-ring-wrap.complete .reactor-wave{ border-color:var(--glow-green); }
+  .pulse-ring.w2{ animation-delay:.55s; }
+  .week-ring-wrap.complete .pulse-ring{ border-color:var(--glow-green); }
   @keyframes waveExpand{
     0%{   transform:translate(-50%,-50%) scale(1);   opacity:0; }
     4%{   opacity:.9; }
     55%{  transform:translate(-50%,-50%) scale(5.4); opacity:0; }
     100%{ transform:translate(-50%,-50%) scale(5.4); opacity:0; }
   }
-
-  /* the core: bright, sharp, double-heartbeat pulse (lub ~7%, dub ~24%, rest) */
-  .reactor-core{
-    position:absolute; left:50%; top:50%; width:30%; height:30%;
-    transform:translate(-50%,-50%) scale(.7);
-    border-radius:50%; z-index:3; pointer-events:none;
-    background:radial-gradient(circle, var(--rx-hot) 0%, var(--rx) 45%, var(--rx-deep) 72%, transparent 88%);
-    box-shadow:0 0 6px 1px rgba(196,24,48,.6);
-    animation: reactorHeartbeat 1.9s ease-out infinite;
-  }
-  .week-ring-wrap.complete .reactor-core{
-    background:radial-gradient(circle, #eafff2 0%, var(--glow-green) 45%, #1a8a52 72%, transparent 88%);
-    box-shadow:0 0 6px 1px rgba(57,217,122,.6);
-  }
-  /* the iris/pupil: a dark round core-within-the-core, off the main heartbeat timing
-     so its dilation feels involuntary rather than mechanical - like something watching
-     that breathes on its own rhythm, not in lockstep with the reactor pulse */
-  .reactor-core::after{
-    content:''; position:absolute; left:50%; top:50%;
-    width:46%; height:46%; border-radius:50%;
-    transform:translate(-50%,-50%) scale(1);
-    background:radial-gradient(circle, var(--rx-iris) 0%, var(--rx-iris) 62%, transparent 100%);
-    animation: irisDilate 4.1s ease-in-out infinite;
-  }
-  .week-ring-wrap.complete .reactor-core::after{
-    background:radial-gradient(circle, #041008 0%, #041008 62%, transparent 100%);
-  }
-  @keyframes irisDilate{
-    0%,100%{ transform:translate(-50%,-50%) scale(1); }
-    31%{     transform:translate(-50%,-50%) scale(.72); }
-    52%{     transform:translate(-50%,-50%) scale(1.12); }
-    78%{     transform:translate(-50%,-50%) scale(.85); }
-  }
-  @keyframes reactorHeartbeat{
-    0%{    opacity:.55; transform:translate(-50%,-50%) scale(.7); }
-    7%{    opacity:1;   transform:translate(-50%,-50%) scale(1.05); }
-    15%{   opacity:.62; transform:translate(-50%,-50%) scale(.78); }
-    24%{   opacity:.95; transform:translate(-50%,-50%) scale(.98); }
-    38%{   opacity:.55; transform:translate(-50%,-50%) scale(.7); }
-    100%{  opacity:.55; transform:translate(-50%,-50%) scale(.7); }
-  }
-  /* .reactor-glow shares the same keyframe but is a plain div (no transform needed on
-     a full-bleed gradient) - override to animate opacity only there */
-  .reactor-glow{ animation-name:reactorGlowBeat; }
-  @keyframes reactorGlowBeat{
+  @keyframes glowBeat{
     0%{   opacity:.35; }
     7%{   opacity:.75; }
     15%{  opacity:.4; }
@@ -838,10 +676,9 @@
      disabled above, the orb would sit there permanently empty, so show a single bolt
      statically instead of nothing. */
   @media (prefers-reduced-motion: reduce){
-    .reactor-glow{ animation:none !important; opacity:.55; }
-    .eye-flame{ animation:none !important; opacity:.65; }
-    .reactor-wave{ animation:none !important; opacity:0; }
-    .reactor-core{ animation:none !important; opacity:.85; transform:translate(-50%,-50%) scale(.9); }
+    .ring-glow{ animation:none !important; opacity:.55; }
+    .flame-icon{ animation:none !important; opacity:.95; }
+    .pulse-ring{ animation:none !important; opacity:0; }
     .week-ring-orb::after{ animation:none !important; opacity:.5; }
   }
 </style>
@@ -956,7 +793,6 @@
     <div class="eyebrow">Trainingslog</div>
     <h1 id="homeGreeting">Hey</h1>
     <div id="buildTag" style="font-size:10px; color:var(--text-3); margin-top:6px; font-family:'IBM Plex Mono',monospace;"></div>
-    <div id="diagTag" style="font-size:10px; color:var(--text-3); margin-top:2px; font-family:'IBM Plex Mono',monospace; white-space:pre-line;"></div>
   </div>
   <div class="home-list" id="homeList"></div>
 </section>
@@ -1278,7 +1114,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-screenheight-fix';
+const APP_BUILD = '2026-07-21-fitness-flame';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2185,25 +2021,6 @@ async function init(){
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
   const buildTagEl = document.getElementById('buildTag');
   if(buildTagEl) buildTagEl.textContent = APP_BUILD + ' · ' + (isStandalone ? 'standalone' : 'browser');
-  function updateDiag(){
-    const diagEl = document.getElementById('diagTag');
-    const nav = document.getElementById('bottomNav');
-    if(!diagEl || !nav) return;
-    const navRect = nav.getBoundingClientRect();
-    const htmlH = document.documentElement.getBoundingClientRect().height;
-    const bodyH = document.body.getBoundingClientRect().height;
-    const vv = window.visualViewport ? window.visualViewport.height : null;
-    diagEl.textContent =
-      `innerH:${window.innerHeight} vvH:${vv!==null?Math.round(vv):'n/a'} screenH:${window.screen.height}\n` +
-      `htmlH:${Math.round(htmlH)} bodyH:${Math.round(bodyH)} navBottom:${Math.round(navRect.bottom)}\n` +
-      `appHeightVar:${getComputedStyle(document.documentElement).getPropertyValue('--app-height')} dpr:${window.devicePixelRatio}`;
-  }
-  updateDiag();
-  window.addEventListener('resize', updateDiag);
-  window.addEventListener('orientationchange', updateDiag);
-  if(window.visualViewport) window.visualViewport.addEventListener('resize', updateDiag);
-  setTimeout(updateDiag, 500);
-  setTimeout(updateDiag, 1500);
   checkForUpdate(true);
 }
 document.addEventListener('visibilitychange', ()=>{
@@ -2345,51 +2162,12 @@ function renderHome(){
           <circle class="week-ring-fill${pct >= 100 ? ' complete' : ''}" cx="50" cy="50" r="42" data-target-pct="${pct}"/>
         </svg>
         <div class="week-ring-orb">
-          <div class="reactor-glow"></div>
-          <svg class="eye-flames" viewBox="0 0 100 100">
-            <g transform="translate(50 50) rotate(3.2)">
-              <path class="eye-flame f0" d="M-7.80,-6.60 C-7.20,-15.38 -12.86,-22.90 -9.00,-27.50 C-6.86,-21.23 1.14,-12.87 7.80,-6.60 Q0,-3.48 -7.80,-6.60 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(358.6)">
-              <path class="eye-flame f1" d="M-8.00,-7.40 C-5.08,-16.09 2.14,-23.55 6.10,-28.10 C8.30,-21.89 6.54,-13.61 8.00,-7.40 Q0,-4.20 -8.00,-7.40 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(11.3)">
-              <path class="eye-flame f2" d="M-5.60,-8.40 C-3.64,-14.45 0.93,-19.63 3.70,-22.80 C5.24,-18.48 4.38,-12.72 5.60,-8.40 Q0,-6.16 -5.60,-8.40 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(9.0)">
-              <path class="eye-flame f3" d="M-9.50,-7.80 C-8.14,-13.39 -11.50,-18.17 -6.80,-21.10 C-4.19,-17.11 2.85,-11.79 9.50,-7.80 Q0,-4.00 -9.50,-7.80 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(140.2)">
-              <path class="eye-flame f4" d="M-9.60,-6.70 C-8.26,-15.94 -11.85,-23.86 -7.10,-28.70 C-4.46,-22.10 2.80,-13.30 9.60,-6.70 Q0,-2.86 -9.60,-6.70 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(114.5)">
-              <path class="eye-flame f5" d="M-9.00,-7.20 C-5.58,-13.33 3.34,-18.59 7.80,-21.80 C10.28,-17.42 7.68,-11.58 9.00,-7.20 Q0,-3.60 -9.00,-7.20 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(177.4)">
-              <path class="eye-flame f6" d="M-6.00,-8.90 C-5.03,-17.30 -6.47,-24.50 -3.50,-28.90 C-1.85,-22.90 2.08,-14.90 6.00,-8.90 Q0,-6.50 -6.00,-8.90 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(182.7)">
-              <path class="eye-flame f7" d="M-7.80,-6.90 C-4.72,-13.58 3.64,-19.30 7.50,-22.80 C9.64,-18.03 6.92,-11.67 7.80,-6.90 Q0,-3.78 -7.80,-6.90 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(203.1)">
-              <path class="eye-flame f8" d="M-9.50,-7.30 C-8.43,-15.49 -13.40,-22.51 -8.70,-26.80 C-6.09,-20.95 2.18,-13.15 9.50,-7.30 Q0,-3.50 -9.50,-7.30 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(252.7)">
-              <path class="eye-flame f9" d="M-7.80,-7.20 C-6.87,-15.52 -10.66,-22.64 -6.80,-27.00 C-4.65,-21.06 1.91,-13.14 7.80,-7.20 Q0,-4.08 -7.80,-7.20 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(254.8)">
-              <path class="eye-flame f10" d="M-6.20,-7.70 C-3.20,-16.31 6.63,-23.69 9.70,-28.20 C11.40,-22.05 6.80,-13.85 6.20,-7.70 Q0,-5.22 -6.20,-7.70 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(242.3)">
-              <path class="eye-flame f11" d="M-9.00,-8.70 C-8.23,-17.90 -14.36,-25.78 -9.90,-30.60 C-7.43,-24.03 1.49,-15.27 9.00,-8.70 Q0,-5.10 -9.00,-8.70 Z"/>
-            </g>
-            <g transform="translate(50 50) rotate(280.6)">
-              <path class="eye-flame f12" d="M-6.00,-6.40 C-3.33,-15.18 4.83,-22.70 7.80,-27.30 C9.45,-21.03 6.03,-12.67 6.00,-6.40 Q0,-4.00 -6.00,-6.40 Z"/>
-            </g>
+          <div class="ring-glow"></div>
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring w2"></div>
+          <svg class="flame-icon-svg" viewBox="0 0 100 100">
+            <path class="flame-icon" d="M50,86 C34,86 23,72 23,56 C23,42 30,32 35,19 C36,29 43,35 43,43 C43,31 49,21 51,12 C56,21 59,33 59,43 C59,35 66,29 67,19 C72,32 79,42 79,56 C79,72 66,86 50,86 Z"/>
           </svg>
-          <div class="reactor-wave"></div>
-          <div class="reactor-wave w2"></div>
-          <div class="reactor-core"></div>
         </div>
         <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
       </div>
