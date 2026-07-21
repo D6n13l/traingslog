@@ -56,7 +56,7 @@
     color:var(--text);
     font-family:'Inter',system-ui,sans-serif;
     height:100vh;
-    height:100svh;
+    height:100dvh;
     color-scheme:dark;
   }
   .mono{font-family:'IBM Plex Mono',monospace;}
@@ -1243,7 +1243,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-17-htmlbg';
+const APP_BUILD = '2026-07-17-dvhfix';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
