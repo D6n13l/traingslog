@@ -3,6 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<script>
+  /* Diagnostics on this device showed innerHeight/visualViewport.height report
+     812px while window.screen.height correctly reports 874px - a real 62pt
+     that iOS hides from the usual viewport APIs in this standalone PWA, even
+     though the space physically exists. So instead of innerHeight/visualViewport,
+     we source body's height from screen.height directly, forcing the app to
+     actually use the full screen. */
+  (function(){
+    function setAppHeight(){
+      var h = window.screen && window.screen.height ? window.screen.height : window.innerHeight;
+      document.documentElement.style.setProperty('--app-height', h + 'px');
+    }
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', setAppHeight);
+  })();
+</script>
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0E0F12">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -52,7 +69,7 @@
   html,body{margin:0;padding:0;overscroll-behavior-y:none; height:100%; overflow:hidden;}
   html{background:var(--bg);}
   body{
-    height:100%;
+    height:var(--app-height, 100%);
     display:flex;
     flex-direction:column;
     background:var(--bg);
@@ -165,79 +182,47 @@
   }
   .week-ring-fill.complete{ stroke:var(--glow-green); }
 
-  /* ============ Weekly progress flame ============
-     A single flame icon sits in the centre of the ring, with a soft ambient
-     glow behind it and two expanding pulse rings - reads as "streak / energy
-     this week" rather than anything abstract. Kept deliberately simple:
-     one shape, one flicker animation, cheap transform/opacity only.
+  /* ============ Weekly progress light ============
+     A single diffuse glow grows out from the centre, pulses twice, then
+     contracts back down and rests before repeating the cycle - reads as
+     "building and releasing energy" rather than any fixed icon or shape.
+     One element, one animation, cheap transform/opacity only.
 
      Layer order (bottom -> top):
        1. .week-ring-orb        glass body, unlit dark base
-       2. .ring-glow            ambient bloom behind everything, breathes with the pulse
-       3. .pulse-ring x2        two rings that expand outward from the flame on each beat
-       4. .flame-icon           the flame itself, flickering gently
-       5. .week-ring-orb::after thin containing edge, lit from within only
+       2. .pulse-glow           the diffuse light itself: grows, pulses x2, contracts
+       3. .week-ring-orb::after thin containing edge, lit from within only
   */
-  :root{ --rx:#c41830; --rx-hot:#ff9c8a; --rx-deep:#2b0308; }
+  :root{ --rx:#c41830; --rx-hot:#ff9c8a; }
 
   .week-ring-orb{
     position:absolute; inset:13px; border-radius:50%; z-index:1; overflow:hidden;
     background:radial-gradient(circle at 50% 50%, #0a1218, #050a0d 100%);
   }
 
-  /* ambient bloom, breathing with the pulse - gives the flame somewhere to glow into */
-  .ring-glow{
-    position:absolute; inset:0; border-radius:50%; z-index:0; pointer-events:none;
-    background:radial-gradient(circle, var(--rx) 0%, rgba(43,3,8,.35) 45%, transparent 72%);
+  .pulse-glow{
+    position:absolute; left:50%; top:50%; width:70%; height:70%;
+    transform:translate(-50%,-50%) scale(.3);
+    border-radius:50%; z-index:2; pointer-events:none;
+    background:radial-gradient(circle, var(--rx-hot) 0%, var(--rx) 45%, transparent 72%);
+    filter:blur(3px);
     mix-blend-mode:screen;
-    animation: glowBeat 1.9s ease-out infinite;
+    opacity:.2;
+    animation: glowGrowPulse 3.6s ease-in-out infinite;
   }
-  .week-ring-wrap.complete .ring-glow{
-    background:radial-gradient(circle, var(--glow-green) 0%, rgba(31,174,96,.25) 45%, transparent 72%);
+  .week-ring-wrap.complete .pulse-glow{
+    background:radial-gradient(circle, #eafff2 0%, var(--glow-green) 45%, transparent 72%);
   }
-
-  .flame-icon-svg{ position:absolute; inset:0; z-index:2; pointer-events:none; }
-  .flame-icon{
-    fill:url(#flameGrad);
-    filter:drop-shadow(0 0 3px rgba(196,24,48,.55));
-    transform-box:fill-box; transform-origin:center;
-    animation: flameFlicker 2.6s ease-in-out infinite;
-  }
-  .week-ring-wrap.complete .flame-icon{
-    fill:url(#flameGradComplete) !important;
-    filter:drop-shadow(0 0 3px rgba(57,217,122,.55));
-  }
-  @keyframes flameFlicker{
-    0%,100%{ opacity:.85; transform:scale(1)     ; }
-    30%{     opacity:1;   transform:scale(1.06)  ; }
-    55%{     opacity:.75; transform:scale(.94)   ; }
-    80%{     opacity:.92; transform:scale(1.02)  ; }
-  }
-
-  /* pulse rings: two rings expand from the flame outward and fade, firing on the
-     same beat as the flame itself - the "energy pulsing outward" part */
-  .pulse-ring{
-    position:absolute; left:50%; top:50%; width:14%; height:14%;
-    transform:translate(-50%,-50%);
-    border-radius:50%; z-index:1; pointer-events:none;
-    border:1.5px solid var(--rx);
-    animation: waveExpand 1.9s ease-out infinite;
-  }
-  .pulse-ring.w2{ animation-delay:.55s; }
-  .week-ring-wrap.complete .pulse-ring{ border-color:var(--glow-green); }
-  @keyframes waveExpand{
-    0%{   transform:translate(-50%,-50%) scale(1);   opacity:0; }
-    4%{   opacity:.9; }
-    55%{  transform:translate(-50%,-50%) scale(5.4); opacity:0; }
-    100%{ transform:translate(-50%,-50%) scale(5.4); opacity:0; }
-  }
-  @keyframes glowBeat{
-    0%{   opacity:.35; }
-    7%{   opacity:.75; }
-    15%{  opacity:.4; }
-    24%{  opacity:.65; }
-    38%{  opacity:.35; }
-    100%{ opacity:.35; }
+  /* grow out from the centre (0-18%), pulse twice (18-62%), contract and rest (62-100%) */
+  @keyframes glowGrowPulse{
+    0%{   transform:translate(-50%,-50%) scale(.3);  opacity:.2; }
+    18%{  transform:translate(-50%,-50%) scale(1);   opacity:.85; }
+    28%{  transform:translate(-50%,-50%) scale(1.18); opacity:1; }
+    38%{  transform:translate(-50%,-50%) scale(.94);  opacity:.7; }
+    50%{  transform:translate(-50%,-50%) scale(1.15); opacity:.95; }
+    62%{  transform:translate(-50%,-50%) scale(1);    opacity:.8; }
+    85%{  transform:translate(-50%,-50%) scale(.45);  opacity:.3; }
+    100%{ transform:translate(-50%,-50%) scale(.3);   opacity:.2; }
   }
 
   .week-ring-orb::after{
@@ -676,9 +661,7 @@
      disabled above, the orb would sit there permanently empty, so show a single bolt
      statically instead of nothing. */
   @media (prefers-reduced-motion: reduce){
-    .ring-glow{ animation:none !important; opacity:.55; }
-    .flame-icon{ animation:none !important; opacity:.95; }
-    .pulse-ring{ animation:none !important; opacity:0; }
+    .pulse-glow{ animation:none !important; opacity:.75; transform:translate(-50%,-50%) scale(1); }
     .week-ring-orb::after{ animation:none !important; opacity:.5; }
   }
 </style>
@@ -1114,7 +1097,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-fitness-flame';
+const APP_BUILD = '2026-07-21-pulse-glow-and-height-restore';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2162,12 +2145,7 @@ function renderHome(){
           <circle class="week-ring-fill${pct >= 100 ? ' complete' : ''}" cx="50" cy="50" r="42" data-target-pct="${pct}"/>
         </svg>
         <div class="week-ring-orb">
-          <div class="ring-glow"></div>
-          <div class="pulse-ring"></div>
-          <div class="pulse-ring w2"></div>
-          <svg class="flame-icon-svg" viewBox="0 0 100 100">
-            <path class="flame-icon" d="M50,86 C34,86 23,72 23,56 C23,42 30,32 35,19 C36,29 43,35 43,43 C43,31 49,21 51,12 C56,21 59,33 59,43 C59,35 66,29 67,19 C72,32 79,42 79,56 C79,72 66,86 50,86 Z"/>
-          </svg>
+          <div class="pulse-glow"></div>
         </div>
         <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
       </div>
