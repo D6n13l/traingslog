@@ -8,13 +8,27 @@
      app shell (see body{height:var(--app-height,100%)} in the stylesheet below)
      never has to rely on vh/dvh, which iOS standalone PWAs mis-measure. Runs
      synchronously here (before <body> renders) to avoid a flash of wrong size,
-     and again on resize/orientation change to stay correct after rotation. */
+     and again on resize/orientation change to stay correct after rotation.
+
+     On a cold launch from the home screen icon, iOS/WKWebView can initially
+     report a shorter height - as if Safari's own bottom bar still needed room -
+     and only corrects itself a moment later, WITHOUT firing a 'resize' event.
+     So besides the immediate read, we re-measure a few more times shortly after
+     (next frames, on 'load', and after a short delay) purely as a safety net to
+     catch that silent correction. */
   (function(){
     function setAppHeight(){
       var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
       document.documentElement.style.setProperty('--app-height', h + 'px');
     }
     setAppHeight();
+    requestAnimationFrame(function(){
+      setAppHeight();
+      requestAnimationFrame(setAppHeight);
+    });
+    window.addEventListener('load', setAppHeight);
+    setTimeout(setAppHeight, 300);
+    setTimeout(setAppHeight, 1000);
     window.addEventListener('resize', setAppHeight);
     window.addEventListener('orientationchange', setAppHeight);
     if(window.visualViewport){ window.visualViewport.addEventListener('resize', setAppHeight); }
@@ -1268,7 +1282,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-jsheight-fix';
+const APP_BUILD = '2026-07-21-height-resettle';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
