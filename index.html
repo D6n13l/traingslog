@@ -1096,10 +1096,10 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-symmetric-pulse-cleanup';
+const APP_BUILD = '2026-07-21-carryover-minreps';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
-let sharedData = { programs: [], verlauf: [], gewichte: {} };
+let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {} };
 let workoutState = {}; // { programId: { dayId: { exId: [{weight,done}] } } }
 let currentProgramId = null;
 let currentDayId = null;
@@ -1701,7 +1701,7 @@ async function updateSharedData(mutatorFn){
       let current;
       try{ current = (typeof raw === 'string') ? JSON.parse(raw) : null; }catch(e){ current = null; }
       if(!current || !current.programs || !current.programs.length){
-        current = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, nutzerListe:['Daniel'] };
+        current = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, wiederholungen:{}, nutzerListe:['Daniel'] };
       }
       if(!current.nutzerListe) current.nutzerListe = ['Daniel'];
       mutatorFn(current);
@@ -1754,6 +1754,7 @@ async function restoreBackup(ts){
     current.programs = snapshot.programs;
     current.verlauf = snapshot.verlauf;
     current.gewichte = snapshot.gewichte;
+    current.wiederholungen = snapshot.wiederholungen || {};
     current.nutzerListe = snapshot.nutzerListe;
   });
   return ok;
@@ -1981,6 +1982,8 @@ async function init(){
   await updateSharedData(current => {
     if(!current.nutzerListe) current.nutzerListe = ['Daniel'];
     if(!Array.isArray(current.programs)) current.programs = [];
+    if(!current.gewichte) current.gewichte = {};
+    if(!current.wiederholungen) current.wiederholungen = {};
     BUILTIN_PROGRAMS.forEach(({id, factory})=>{
       const existing = current.programs.find(p=>p.id===id);
       const isBroken = existing && (!Array.isArray(existing.days) || !existing.days.length);
@@ -2237,7 +2240,7 @@ function renderHome(){
   document.getElementById('exportLink').onclick = exportBackup;
   document.getElementById('resetLink').onclick = async ()=>{
     if(!confirm(t('reset_confirm'))) return;
-    sharedData = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, nutzerListe:['Daniel'] };
+    sharedData = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, wiederholungen:{}, nutzerListe:['Daniel'] };
     await storageSet('trainingslog_daten', sharedData, true);
     renderHome();
     showToast(t('reset_done_toast'));
@@ -2403,7 +2406,8 @@ function getSetState(exId, setsCount){
   workoutState[p][d] = workoutState[p][d] || {};
   if(!workoutState[p][d][exId]){
     const lastWeight = (sharedData.gewichte[currentUser] && sharedData.gewichte[currentUser][exId]) || '';
-    workoutState[p][d][exId] = Array.from({length:setsCount}, ()=>({weight:lastWeight, reps:'', done:false}));
+    const lastReps = (sharedData.wiederholungen && sharedData.wiederholungen[currentUser] && sharedData.wiederholungen[currentUser][exId]) || '';
+    workoutState[p][d][exId] = Array.from({length:setsCount}, ()=>({weight:lastWeight, reps:lastReps, done:false}));
   }
   return workoutState[p][d][exId];
 }
@@ -2667,12 +2671,23 @@ document.getElementById('finishBtn').addEventListener('click', ()=>{
       current.verlauf.unshift(entry);
       current.verlauf = current.verlauf.slice(0, 500);
       current.gewichte[currentUser] = current.gewichte[currentUser] || {};
+      current.wiederholungen = current.wiederholungen || {};
+      current.wiederholungen[currentUser] = current.wiederholungen[currentUser] || {};
       entry.exercises.forEach(e=>{
-        const weights = e.sets.map(s=>toNum(s.weight)).filter(w=>!isNaN(w));
-        if(weights.length){
-          const maxW = Math.max(...weights);
+        const minR = minReps(e.target || findTargetFallback(e.id));
+        // Only sets that actually hit the minimum reps count as "achieved" -
+        // a heavy set with too few reps shouldn't get carried over as if it
+        // were a clean success.
+        const qualifying = e.sets
+          .map(s=>({ weight: toNum(s.weight), reps: toNum(s.reps) }))
+          .filter(s=> !isNaN(s.weight) && !isNaN(s.reps) && s.reps >= minR);
+        if(qualifying.length){
+          const best = qualifying.reduce((a,b)=> b.weight > a.weight ? b : a);
+          // Reps always refresh to reflect this latest qualifying session,
+          // independent of whether the weight itself is a new all-time best.
+          current.wiederholungen[currentUser][e.id] = best.reps;
           const prevBest = current.gewichte[currentUser][e.id] || 0;
-          if(maxW > prevBest) current.gewichte[currentUser][e.id] = maxW;
+          if(best.weight > prevBest) current.gewichte[currentUser][e.id] = best.weight;
         }
       });
     });
@@ -2781,6 +2796,13 @@ function avgReps(targetStr){
   if(!nums.length) return 10;
   if(nums.length >= 2) return (nums[0] + nums[1]) / 2;
   return nums[0];
+}
+/* The lower bound of a target like "6–8" or "10–12" is nums[0]; for a single
+   value like "15" or "10/Seite" it's just that one number. Used to decide
+   whether a set's reps were enough for its weight to "count" as achieved. */
+function minReps(targetStr){
+  const nums = ((targetStr||'').match(/\d+/g) || []).map(Number);
+  return nums.length ? nums[0] : 0;
 }
 function findTargetFallback(exId){
   for(const p of sharedData.programs){
