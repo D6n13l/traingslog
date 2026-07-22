@@ -213,17 +213,15 @@
   .week-ring-wrap.complete .pulse-glow{
     background:radial-gradient(circle, #eafff2 0%, var(--glow-green) 45%, transparent 72%);
   }
-  /* grow out fast (0-14%), two sharp beats close together like a heartbeat's
-     lub-dub (14-32%), then hold and contract back down to rest (32-100%) */
+  /* grow (0-40%) and decay (60-100%) are the same length on purpose, with the
+     heartbeat's lub-dub compressed into the middle 20% between them */
   @keyframes glowGrowPulse{
     0%{   transform:translate(-50%,-50%) scale(.3);   opacity:.2; }
-    14%{  transform:translate(-50%,-50%) scale(1);    opacity:.85; }
-    19%{  transform:translate(-50%,-50%) scale(1.24); opacity:1; }
-    24%{  transform:translate(-50%,-50%) scale(.9);   opacity:.65; }
-    30%{  transform:translate(-50%,-50%) scale(1.18); opacity:.95; }
-    38%{  transform:translate(-50%,-50%) scale(1);    opacity:.8; }
-    75%{  transform:translate(-50%,-50%) scale(.95);  opacity:.75; }
-    90%{  transform:translate(-50%,-50%) scale(.45);  opacity:.3; }
+    40%{  transform:translate(-50%,-50%) scale(1);    opacity:.85; }
+    46%{  transform:translate(-50%,-50%) scale(1.24); opacity:1; }
+    50%{  transform:translate(-50%,-50%) scale(.9);   opacity:.65; }
+    56%{  transform:translate(-50%,-50%) scale(1.18); opacity:.95; }
+    60%{  transform:translate(-50%,-50%) scale(1);    opacity:.8; }
     100%{ transform:translate(-50%,-50%) scale(.3);   opacity:.2; }
   }
 
@@ -777,7 +775,6 @@
   <div class="home-header">
     <div class="eyebrow">Trainingslog</div>
     <h1 id="homeGreeting">Hey</h1>
-    <div id="buildTag" style="font-size:10px; color:var(--text-3); margin-top:6px; font-family:'IBM Plex Mono',monospace;"></div>
   </div>
   <div class="home-list" id="homeList"></div>
 </section>
@@ -1099,7 +1096,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-heartbeat-pulse';
+const APP_BUILD = '2026-07-21-symmetric-pulse-cleanup';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
@@ -2003,9 +2000,6 @@ async function init(){
 
   renderHome();
   showScreen('screenHome');
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  const buildTagEl = document.getElementById('buildTag');
-  if(buildTagEl) buildTagEl.textContent = APP_BUILD + ' · ' + (isStandalone ? 'standalone' : 'browser');
   checkForUpdate(true);
 }
 document.addEventListener('visibilitychange', ()=>{
@@ -2731,9 +2725,10 @@ function getKnownUsers(){
   return Array.from(new Set([...fromList, ...fromHistory, ...fromWeights].filter(Boolean)));
 }
 
-function buildExerciseIndex(){
+function buildExerciseIndex(userFilter){
   const map = {};
   (sharedData.verlauf||[]).forEach(entry=>{
+    if(userFilter && userFilter !== 'alle' && entry.user !== userFilter) return;
     entry.exercises.forEach(e=>{
       if(!map[e.id]) map[e.id] = { id:e.id, name:e.name, count:0 };
       map[e.id].count++;
@@ -2744,7 +2739,17 @@ function buildExerciseIndex(){
 
 function renderProgressCard(){
   const card = document.getElementById('progressCard');
-  const exIndex = buildExerciseIndex();
+
+  // Resolve which person we're viewing BEFORE building the exercise list, so
+  // the dropdown only ever offers exercises that actually belong to them -
+  // previously it listed exercises from every user sharing the app, and
+  // picking one that wasn't yours just silently showed "not enough data".
+  const users = getKnownUsers();
+  if(progressUserFilter === 'alle' || !users.includes(progressUserFilter)){
+    progressUserFilter = users.includes(currentUser) ? currentUser : (users[0] || currentUser);
+  }
+
+  const exIndex = buildExerciseIndex(progressUserFilter);
   if(!exIndex.length){ card.style.display = 'none'; return; }
   card.style.display = 'block';
 
@@ -2763,10 +2768,6 @@ function renderProgressCard(){
   });
 
   const chipsWrap = document.getElementById('progressChips');
-  const users = getKnownUsers();
-  if(progressUserFilter === 'alle' || !users.includes(progressUserFilter)){
-    progressUserFilter = users.includes(currentUser) ? currentUser : (users[0] || currentUser);
-  }
   chipsWrap.innerHTML = users.map(u=>`<button class="progress-chip ${progressUserFilter===u?'active':''}" data-user="${u}">${u}</button>`).join('');
   chipsWrap.querySelectorAll('.progress-chip').forEach(btn=>{
     btn.onclick = ()=>{ progressUserFilter = btn.dataset.user; renderProgressCard(); };
@@ -2798,7 +2799,7 @@ function repsForSet(set, ex){
 
 function renderProgressChart(){
   const body = document.getElementById('progressBody');
-  const exIndex = buildExerciseIndex();
+  const exIndex = buildExerciseIndex(progressUserFilter);
   const exMeta = exIndex.find(e=>e.id===progressExerciseId);
 
   let points = [];
