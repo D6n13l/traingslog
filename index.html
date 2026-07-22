@@ -208,20 +208,22 @@
     filter:blur(3px);
     mix-blend-mode:screen;
     opacity:.2;
-    animation: glowGrowPulse 3.6s ease-in-out infinite;
+    animation: glowGrowPulse 2.3s ease-in-out infinite;
   }
   .week-ring-wrap.complete .pulse-glow{
     background:radial-gradient(circle, #eafff2 0%, var(--glow-green) 45%, transparent 72%);
   }
-  /* grow out from the centre (0-18%), pulse twice (18-62%), contract and rest (62-100%) */
+  /* grow out fast (0-14%), two sharp beats close together like a heartbeat's
+     lub-dub (14-32%), then hold and contract back down to rest (32-100%) */
   @keyframes glowGrowPulse{
-    0%{   transform:translate(-50%,-50%) scale(.3);  opacity:.2; }
-    18%{  transform:translate(-50%,-50%) scale(1);   opacity:.85; }
-    28%{  transform:translate(-50%,-50%) scale(1.18); opacity:1; }
-    38%{  transform:translate(-50%,-50%) scale(.94);  opacity:.7; }
-    50%{  transform:translate(-50%,-50%) scale(1.15); opacity:.95; }
-    62%{  transform:translate(-50%,-50%) scale(1);    opacity:.8; }
-    85%{  transform:translate(-50%,-50%) scale(.45);  opacity:.3; }
+    0%{   transform:translate(-50%,-50%) scale(.3);   opacity:.2; }
+    14%{  transform:translate(-50%,-50%) scale(1);    opacity:.85; }
+    19%{  transform:translate(-50%,-50%) scale(1.24); opacity:1; }
+    24%{  transform:translate(-50%,-50%) scale(.9);   opacity:.65; }
+    30%{  transform:translate(-50%,-50%) scale(1.18); opacity:.95; }
+    38%{  transform:translate(-50%,-50%) scale(1);    opacity:.8; }
+    75%{  transform:translate(-50%,-50%) scale(.95);  opacity:.75; }
+    90%{  transform:translate(-50%,-50%) scale(.45);  opacity:.3; }
     100%{ transform:translate(-50%,-50%) scale(.3);   opacity:.2; }
   }
 
@@ -1097,7 +1099,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-pulse-glow-and-height-restore';
+const APP_BUILD = '2026-07-21-heartbeat-pulse';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {} };
