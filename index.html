@@ -181,6 +181,10 @@
   .protein-goal-btn:active{color:var(--text-2);}
   .protein-main{
     font-family:'Oswald',sans-serif; font-weight:700; display:flex; align-items:baseline; gap:2px; margin-bottom:8px;
+    cursor:pointer;
+  }
+  .protein-info-hint{
+    margin-left:auto; color:var(--text-3); font-size:16px; font-weight:400; align-self:center;
   }
   .protein-total{font-size:30px; color:var(--text);}
   .protein-unit{font-size:15px; color:var(--text-3); font-weight:600;}
@@ -189,8 +193,9 @@
   }
   .protein-bar-fill{
     height:100%; border-radius:3px; background:var(--accent);
-    transition:width .5s ease-out;
+    transition:width .5s ease-out, background .3s ease-out;
   }
+  .protein-bar-fill.full{ background:var(--glow-green); }
   .protein-quickadd{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
   .protein-quickadd button{
     background:var(--surface-2); border:1px solid var(--border); border-radius:999px;
@@ -205,6 +210,32 @@
   .protein-reset-link{
     background:none; border:none; color:var(--text-3); font-size:12px; padding:8px 0 0; cursor:pointer;
     text-decoration:underline; text-underline-offset:2px;
+  }
+
+  .protein-overview-modal{
+    position:fixed; inset:0; background:rgba(14,15,18,.88); backdrop-filter:blur(6px); z-index:110;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+    animation:completionFadeIn .25s ease;
+  }
+  .protein-overview-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:22px; max-width:340px; width:100%; position:relative;
+  }
+  .protein-overview-close{
+    position:absolute; top:8px; right:8px; background:none; border:none; color:var(--text-3);
+    font-size:22px; line-height:1; padding:8px; cursor:pointer;
+  }
+  .protein-overview-title{
+    font-family:'Oswald',sans-serif; font-size:19px; font-weight:700; margin:0 0 4px; padding-right:26px;
+  }
+  .protein-overview-sub{font-size:13px; color:var(--text-2); margin:0 0 14px;}
+  .protein-overview-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .protein-overview-list li{
+    background:var(--surface-2); border-radius:10px; padding:10px 12px 10px 32px; font-size:14px;
+    position:relative; color:var(--text);
+  }
+  .protein-overview-list li::before{
+    content:'•'; position:absolute; left:14px; color:var(--accent); font-weight:700;
   }
   .week-card-main{display:flex; align-items:center; gap:16px;}
   .week-ring-wrap{
@@ -251,6 +282,11 @@
   }
   .week-ring-wrap.complete .pulse-glow{
     background:radial-gradient(circle, #eafff2 0%, var(--glow-green) 45%, transparent 72%);
+  }
+  /* After the one-time app-open animation has played, later renders (navigating
+     back to Home, etc.) show this quiet resting state instead of replaying it. */
+  .pulse-glow.no-anim{
+    animation:none; opacity:.5; transform:translate(-50%,-50%) scale(.85);
   }
   /* grow (0-40%) and decay (60-100%) are the same length on purpose, with the
      heartbeat's lub-dub compressed into the middle 20% between them */
@@ -921,6 +957,15 @@
 <div class="timer-flash" id="timerFlash"></div>
 <div class="toast" id="toast"></div>
 
+<div class="protein-overview-modal" id="proteinOverviewModal" style="display:none;">
+  <div class="protein-overview-card">
+    <button class="protein-overview-close" id="proteinOverviewClose">×</button>
+    <h3 class="protein-overview-title" id="proteinOverviewTitle"></h3>
+    <p class="protein-overview-sub" id="proteinOverviewSub"></p>
+    <ul class="protein-overview-list" id="proteinOverviewList"></ul>
+  </div>
+</div>
+
 <script>
 /* ============ Default program ============ */
 function defaultProgram(){
@@ -1135,7 +1180,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-perhide-protein';
+const APP_BUILD = '2026-07-21-onceanim-proteinoverview';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {} };
@@ -1190,6 +1235,11 @@ const UI_TEXT = {
     protein_today_label:'Eiweiß heute', protein_goal_label:'Ziel:', protein_custom_placeholder:'g',
     protein_reset_link:'Heute zurücksetzen', protein_reset_confirm:'Heutigen Eiweiß-Wert wirklich zurücksetzen?',
     protein_goal_prompt:'Neues Tagesziel (in Gramm):',
+    protein_remaining_title:'Noch {amount} g Eiweiß', protein_remaining_sub:'Zum Beispiel:',
+    protein_goal_reached_title:'Tagesziel erreicht 🎉', protein_goal_reached_sub:'Gut gemacht für heute.',
+    protein_food_quark:'Magerquark', protein_food_skyr:'Skyr', protein_food_chicken:'Hähnchenbrust',
+    protein_food_tuna:'Thunfisch (Dose)', protein_food_salami:'Salami', protein_food_brie:'Brie',
+    protein_food_egg_singular:'Ei', protein_food_egg_plural:'Eier',
   },
   en: {
     gate_title:'Who\'s training?', gate_sub:'So history & weights are tracked correctly.',
@@ -1232,6 +1282,11 @@ const UI_TEXT = {
     protein_today_label:'Protein today', protein_goal_label:'Goal:', protein_custom_placeholder:'g',
     protein_reset_link:'Reset today', protein_reset_confirm:'Really reset today\'s protein total?',
     protein_goal_prompt:'New daily goal (in grams):',
+    protein_remaining_title:'{amount} g protein to go', protein_remaining_sub:'For example:',
+    protein_goal_reached_title:'Daily goal reached 🎉', protein_goal_reached_sub:'Nice work today.',
+    protein_food_quark:'low-fat quark', protein_food_skyr:'Skyr', protein_food_chicken:'chicken breast',
+    protein_food_tuna:'canned tuna', protein_food_salami:'salami', protein_food_brie:'Brie',
+    protein_food_egg_singular:'egg', protein_food_egg_plural:'eggs',
   },
   fr: {
     gate_title:'Qui s\'entraîne ?', gate_sub:'Pour que l\'historique et les poids soient bien attribués.',
@@ -1274,6 +1329,11 @@ const UI_TEXT = {
     protein_today_label:'Protéines aujourd\'hui', protein_goal_label:'Objectif :', protein_custom_placeholder:'g',
     protein_reset_link:'Réinitialiser aujourd\'hui', protein_reset_confirm:'Vraiment réinitialiser le total de protéines d\'aujourd\'hui ?',
     protein_goal_prompt:'Nouvel objectif quotidien (en grammes) :',
+    protein_remaining_title:'Encore {amount} g de protéines', protein_remaining_sub:'Par exemple :',
+    protein_goal_reached_title:'Objectif du jour atteint 🎉', protein_goal_reached_sub:'Bien joué pour aujourd\'hui.',
+    protein_food_quark:'fromage blanc maigre', protein_food_skyr:'Skyr', protein_food_chicken:'blanc de poulet',
+    protein_food_tuna:'thon en boîte', protein_food_salami:'salami', protein_food_brie:'brie',
+    protein_food_egg_singular:'œuf', protein_food_egg_plural:'œufs',
   },
   es: {
     gate_title:'¿Quién entrena?', gate_sub:'Para asignar bien el historial y los pesos.',
@@ -1316,6 +1376,11 @@ const UI_TEXT = {
     protein_today_label:'Proteína hoy', protein_goal_label:'Objetivo:', protein_custom_placeholder:'g',
     protein_reset_link:'Reiniciar hoy', protein_reset_confirm:'¿Seguro que quieres reiniciar el total de proteína de hoy?',
     protein_goal_prompt:'Nuevo objetivo diario (en gramos):',
+    protein_remaining_title:'Aún {amount} g de proteína', protein_remaining_sub:'Por ejemplo:',
+    protein_goal_reached_title:'Objetivo diario alcanzado 🎉', protein_goal_reached_sub:'Bien hecho hoy.',
+    protein_food_quark:'requesón bajo en grasa', protein_food_skyr:'Skyr', protein_food_chicken:'pechuga de pollo',
+    protein_food_tuna:'atún en lata', protein_food_salami:'salami', protein_food_brie:'brie',
+    protein_food_egg_singular:'huevo', protein_food_egg_plural:'huevos',
   },
 };
 function t(key){ return (UI_TEXT[appLang] && UI_TEXT[appLang][key]) || UI_TEXT.de[key] || key; }
@@ -2183,9 +2248,56 @@ function applyLanguage(){
 
 /* ============ Home ============ */
 const WEEKLY_GOAL = 4;
+let homeAnimationPlayed = false;
 
 /* ============ Protein tracker ============ */
 const DEFAULT_PROTEIN_GOAL = 150;
+/* Rough average protein content, just enough to give someone a realistic,
+   everyday sense of "how much of what" - not meant to be precise nutrition data. */
+const PROTEIN_FOODS = [
+  { key:'quark',   per100g:12 },
+  { key:'skyr',    per100g:11 },
+  { key:'chicken', per100g:31 },
+  { key:'tuna',    per100g:26 },
+  { key:'salami',  per100g:24 },
+  { key:'brie',    per100g:20 },
+  { key:'egg',     perUnit:7  },
+];
+function openProteinOverview(){
+  const total = getProteinToday();
+  const goal = getProteinGoal();
+  const remaining = goal - total;
+  const modal = document.getElementById('proteinOverviewModal');
+  const titleEl = document.getElementById('proteinOverviewTitle');
+  const subEl = document.getElementById('proteinOverviewSub');
+  const listEl = document.getElementById('proteinOverviewList');
+
+  if(remaining <= 0){
+    titleEl.textContent = t('protein_goal_reached_title');
+    subEl.textContent = t('protein_goal_reached_sub');
+    listEl.innerHTML = '';
+  } else {
+    titleEl.textContent = t('protein_remaining_title').replace('{amount}', Math.round(remaining));
+    subEl.textContent = t('protein_remaining_sub');
+    listEl.innerHTML = PROTEIN_FOODS.map(f=>{
+      if(f.perUnit){
+        const units = Math.max(1, Math.ceil(remaining / f.perUnit));
+        const label = units === 1 ? t('protein_food_egg_singular') : t('protein_food_egg_plural');
+        return `<li>${units} ${label}</li>`;
+      }
+      const grams = Math.max(10, Math.round(remaining / f.per100g * 100 / 10) * 10);
+      return `<li>${grams} g ${t('protein_food_' + f.key)}</li>`;
+    }).join('');
+  }
+  modal.style.display = 'flex';
+}
+function closeProteinOverview(){
+  document.getElementById('proteinOverviewModal').style.display = 'none';
+}
+document.getElementById('proteinOverviewClose').onclick = closeProteinOverview;
+document.getElementById('proteinOverviewModal').addEventListener('click', (e)=>{
+  if(e.target.id === 'proteinOverviewModal') closeProteinOverview();
+});
 function todayKey(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -2232,10 +2344,11 @@ function renderProteinCardHtml(){
       <div class="protein-label">${t('protein_today_label')}</div>
       <button class="protein-goal-btn" id="proteinGoalBtn">${t('protein_goal_label')} ${goal} g ✎</button>
     </div>
-    <div class="protein-main">
+    <div class="protein-main" id="proteinOverviewTrigger">
       <span class="protein-total count-target" data-target="${total}">0</span><span class="protein-unit">&nbsp;/ ${goal} g</span>
+      <span class="protein-info-hint">›</span>
     </div>
-    <div class="protein-bar-track"><div class="protein-bar-fill" style="width:${pct}%"></div></div>
+    <div class="protein-bar-track"><div class="protein-bar-fill${pct>=100 ? ' full' : ''}" style="width:${pct}%"></div></div>
     <div class="protein-quickadd">
       <button data-proteinadd="10">+10</button>
       <button data-proteinadd="20">+20</button>
@@ -2272,6 +2385,8 @@ function wireProteinCard(){
       if(!isNaN(val) && val > 0) setProteinGoal(val);
     };
   }
+  const overviewTrigger = document.getElementById('proteinOverviewTrigger');
+  if(overviewTrigger) overviewTrigger.onclick = openProteinOverview;
 }
 
 function renderHome(){
@@ -2291,7 +2406,7 @@ function renderHome(){
           <circle class="week-ring-fill${pct >= 100 ? ' complete' : ''}" cx="50" cy="50" r="42" data-target-pct="${pct}"/>
         </svg>
         <div class="week-ring-orb">
-          <div class="pulse-glow"></div>
+          <div class="pulse-glow${homeAnimationPlayed ? ' no-anim' : ''}"></div>
         </div>
         <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
       </div>
@@ -2336,7 +2451,12 @@ function renderHome(){
   html += `<button class="reset-link" id="resetLink">${t('reset_link')}</button>`;
   html += `<button class="reset-link" id="backupsLink">${t('backups_link')}</button>`;
   list.innerHTML = html;
-  animateWeekCard();
+  if(!homeAnimationPlayed){
+    animateWeekCard();
+    homeAnimationPlayed = true;
+  } else {
+    setWeekCardFinalState();
+  }
   wireProteinCard();
 
   document.querySelectorAll('.program-card').forEach(card=>{
@@ -2470,6 +2590,20 @@ function animateWeekCard(){
     if(progress < 1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
+}
+/* Same end result as animateWeekCard(), but applied immediately with no tween -
+   used for every render after the one-time app-open animation has played. */
+function setWeekCardFinalState(){
+  const circumference = 2 * Math.PI * 42;
+  document.querySelectorAll('.count-target').forEach(el=>{
+    const target = parseInt(el.dataset.target, 10) || 0;
+    el.textContent = target.toLocaleString(LOCALE_MAP[appLang]);
+  });
+  const ringEl = document.querySelector('.week-ring-fill');
+  if(ringEl){
+    const targetPct = parseFloat(ringEl.dataset.targetPct) || 0;
+    ringEl.style.strokeDashoffset = circumference - (circumference * (targetPct/100));
+  }
 }
 
 function getHomeStats(){
