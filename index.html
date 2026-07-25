@@ -167,6 +167,45 @@
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     padding:16px; margin-bottom:18px;
   }
+
+  /* ============ Protein tracker ============ */
+  .protein-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px; margin-bottom:18px;
+  }
+  .protein-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
+  .protein-label{font-size:13px; color:var(--text-2); font-weight:600;}
+  .protein-goal-btn{
+    background:none; border:none; color:var(--text-3); font-size:12px; padding:2px 4px; cursor:pointer;
+  }
+  .protein-goal-btn:active{color:var(--text-2);}
+  .protein-main{
+    font-family:'Oswald',sans-serif; font-weight:700; display:flex; align-items:baseline; gap:2px; margin-bottom:8px;
+  }
+  .protein-total{font-size:30px; color:var(--text);}
+  .protein-unit{font-size:15px; color:var(--text-3); font-weight:600;}
+  .protein-bar-track{
+    height:6px; border-radius:3px; background:var(--surface-2); overflow:hidden; margin-bottom:12px;
+  }
+  .protein-bar-fill{
+    height:100%; border-radius:3px; background:var(--accent);
+    transition:width .5s ease-out;
+  }
+  .protein-quickadd{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .protein-quickadd button{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:999px;
+    color:var(--text); font-size:13px; font-weight:600; padding:6px 12px; cursor:pointer;
+  }
+  .protein-quickadd button:active{background:var(--surface-3);}
+  .protein-custom-input{
+    width:56px; background:var(--surface-2); border:1px solid var(--border); border-radius:999px;
+    color:var(--text); font-size:13px; padding:6px 10px; text-align:center;
+  }
+  .protein-custom-add{min-width:34px;}
+  .protein-reset-link{
+    background:none; border:none; color:var(--text-3); font-size:12px; padding:8px 0 0; cursor:pointer;
+    text-decoration:underline; text-underline-offset:2px;
+  }
   .week-card-main{display:flex; align-items:center; gap:16px;}
   .week-ring-wrap{
     position:relative; width:84px; height:84px; flex-shrink:0;
@@ -1096,10 +1135,10 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-carryover-minreps';
+const APP_BUILD = '2026-07-21-perhide-protein';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
-let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {} };
+let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {} };
 let workoutState = {}; // { programId: { dayId: { exId: [{weight,done}] } } }
 let currentProgramId = null;
 let currentDayId = null;
@@ -1131,7 +1170,7 @@ const UI_TEXT = {
     save_fail_toast:'Konnte nicht speichern — wird automatisch nachgeholt',
     reset_confirm:'Wirklich ALLE geteilten Daten (Trainings, Verlauf, Gewichte) löschen?', reset_done_toast:'Zurückgesetzt',
     export_success_toast:'Backup wird heruntergeladen', export_fail_toast:'Download hat nicht geklappt',
-    program_delete_confirm:'Dieses Training wirklich löschen? Der Verlauf bleibt erhalten.',
+    program_delete_confirm:'Dieses Training aus deiner Liste entfernen? Bei anderen Nutzern bleibt es weiter sichtbar, und der Verlauf bleibt erhalten.',
     history_delete_confirm:'Diesen Trainings-Eintrag wirklich löschen?', history_deleted_toast:'Eintrag gelöscht', history_updated_toast:'Eintrag aktualisiert ✓',
     builder_new_title:'Neues Training', builder_new_heading:'Erstellen', builder_edit_title:'Training bearbeiten',
     builder_name_label:'Name des Trainings', builder_name_placeholder:'z. B. Oberkörper / Unterkörper',
@@ -1148,6 +1187,9 @@ const UI_TEXT = {
     history_edit_save:'Änderungen speichern', section_main:'Hauptübungen', section_iso:'Isolationsübungen',
     firebase_reconnected_toast:'Wieder verbunden — Daten gespeichert ✓', timer_done:'Fertig',
     backups_link:'Sicherungen anzeigen', backups_title:'Sicherungen', backups_empty:'Noch keine Sicherungen vorhanden.', backups_restore_btn:'Wiederherstellen', backups_restore_confirm:'Diesen Stand wiederherstellen? Der aktuelle Stand wird dadurch ersetzt.', backups_restored_toast:'Sicherung wiederhergestellt ✓', backups_close:'Schließen', update_available:'Neue Version verfügbar', update_reload_btn:'Aktualisieren',
+    protein_today_label:'Eiweiß heute', protein_goal_label:'Ziel:', protein_custom_placeholder:'g',
+    protein_reset_link:'Heute zurücksetzen', protein_reset_confirm:'Heutigen Eiweiß-Wert wirklich zurücksetzen?',
+    protein_goal_prompt:'Neues Tagesziel (in Gramm):',
   },
   en: {
     gate_title:'Who\'s training?', gate_sub:'So history & weights are tracked correctly.',
@@ -1170,7 +1212,7 @@ const UI_TEXT = {
     save_fail_toast:'Could not save — will retry automatically',
     reset_confirm:'Really delete ALL shared data (trainings, history, weights)?', reset_done_toast:'Reset',
     export_success_toast:'Downloading backup', export_fail_toast:'Download failed',
-    program_delete_confirm:'Really delete this training? History stays intact.',
+    program_delete_confirm:'Remove this training from your list? It stays visible for other users, and history stays intact.',
     history_delete_confirm:'Really delete this workout entry?', history_deleted_toast:'Entry deleted', history_updated_toast:'Entry updated ✓',
     builder_new_title:'New Training', builder_new_heading:'Create', builder_edit_title:'Edit Training',
     builder_name_label:'Training name', builder_name_placeholder:'e.g. Upper Body / Lower Body',
@@ -1187,6 +1229,9 @@ const UI_TEXT = {
     history_edit_save:'Save changes', section_main:'Main exercises', section_iso:'Isolation exercises',
     firebase_reconnected_toast:'Reconnected — data saved ✓', timer_done:'Done',
     backups_link:'View backups', backups_title:'Backups', backups_empty:'No backups yet.', backups_restore_btn:'Restore', backups_restore_confirm:'Restore this snapshot? Your current data will be replaced.', backups_restored_toast:'Backup restored ✓', backups_close:'Close', update_available:'New version available', update_reload_btn:'Reload',
+    protein_today_label:'Protein today', protein_goal_label:'Goal:', protein_custom_placeholder:'g',
+    protein_reset_link:'Reset today', protein_reset_confirm:'Really reset today\'s protein total?',
+    protein_goal_prompt:'New daily goal (in grams):',
   },
   fr: {
     gate_title:'Qui s\'entraîne ?', gate_sub:'Pour que l\'historique et les poids soient bien attribués.',
@@ -1209,7 +1254,7 @@ const UI_TEXT = {
     save_fail_toast:'Échec de l\'enregistrement — nouvelle tentative automatique',
     reset_confirm:'Vraiment supprimer TOUTES les données partagées (programmes, historique, poids) ?', reset_done_toast:'Réinitialisé',
     export_success_toast:'Téléchargement de la sauvegarde', export_fail_toast:'Échec du téléchargement',
-    program_delete_confirm:'Vraiment supprimer ce programme ? L\'historique est conservé.',
+    program_delete_confirm:'Retirer ce programme de votre liste ? Il reste visible pour les autres utilisateurs, et l\'historique est conservé.',
     history_delete_confirm:'Vraiment supprimer cette séance ?', history_deleted_toast:'Entrée supprimée', history_updated_toast:'Entrée mise à jour ✓',
     builder_new_title:'Nouveau programme', builder_new_heading:'Créer', builder_edit_title:'Modifier le programme',
     builder_name_label:'Nom du programme', builder_name_placeholder:'ex. Haut du corps / Bas du corps',
@@ -1226,6 +1271,9 @@ const UI_TEXT = {
     history_edit_save:'Enregistrer les modifications', section_main:'Exercices principaux', section_iso:'Exercices d\'isolation',
     firebase_reconnected_toast:'Reconnecté — données enregistrées ✓', timer_done:'Terminé',
     backups_link:'Voir les sauvegardes', backups_title:'Sauvegardes', backups_empty:'Pas encore de sauvegarde.', backups_restore_btn:'Restaurer', backups_restore_confirm:'Restaurer cet état ? Les données actuelles seront remplacées.', backups_restored_toast:'Sauvegarde restaurée ✓', backups_close:'Fermer', update_available:'Nouvelle version disponible', update_reload_btn:'Actualiser',
+    protein_today_label:'Protéines aujourd\'hui', protein_goal_label:'Objectif :', protein_custom_placeholder:'g',
+    protein_reset_link:'Réinitialiser aujourd\'hui', protein_reset_confirm:'Vraiment réinitialiser le total de protéines d\'aujourd\'hui ?',
+    protein_goal_prompt:'Nouvel objectif quotidien (en grammes) :',
   },
   es: {
     gate_title:'¿Quién entrena?', gate_sub:'Para asignar bien el historial y los pesos.',
@@ -1248,7 +1296,7 @@ const UI_TEXT = {
     save_fail_toast:'No se pudo guardar — se reintentará automáticamente',
     reset_confirm:'¿Seguro que quieres borrar TODOS los datos compartidos (entrenamientos, historial, pesos)?', reset_done_toast:'Restablecido',
     export_success_toast:'Descargando copia de seguridad', export_fail_toast:'Error al descargar',
-    program_delete_confirm:'¿Seguro que quieres borrar este entrenamiento? El historial se conserva.',
+    program_delete_confirm:'¿Quitar este entrenamiento de tu lista? Sigue visible para otros usuarios, y el historial se conserva.',
     history_delete_confirm:'¿Seguro que quieres borrar esta sesión?', history_deleted_toast:'Entrada eliminada', history_updated_toast:'Entrada actualizada ✓',
     builder_new_title:'Nuevo entrenamiento', builder_new_heading:'Crear', builder_edit_title:'Editar entrenamiento',
     builder_name_label:'Nombre del entrenamiento', builder_name_placeholder:'ej. Tren superior / Tren inferior',
@@ -1265,6 +1313,9 @@ const UI_TEXT = {
     history_edit_save:'Guardar cambios', section_main:'Ejercicios principales', section_iso:'Ejercicios de aislamiento',
     firebase_reconnected_toast:'Reconectado — datos guardados ✓', timer_done:'Listo',
     backups_link:'Ver copias de seguridad', backups_title:'Copias de seguridad', backups_empty:'Aún no hay copias de seguridad.', backups_restore_btn:'Restaurar', backups_restore_confirm:'¿Restaurar este estado? Los datos actuales serán reemplazados.', backups_restored_toast:'Copia restaurada ✓', backups_close:'Cerrar', update_available:'Nueva versión disponible', update_reload_btn:'Actualizar',
+    protein_today_label:'Proteína hoy', protein_goal_label:'Objetivo:', protein_custom_placeholder:'g',
+    protein_reset_link:'Reiniciar hoy', protein_reset_confirm:'¿Seguro que quieres reiniciar el total de proteína de hoy?',
+    protein_goal_prompt:'Nuevo objetivo diario (en gramos):',
   },
 };
 function t(key){ return (UI_TEXT[appLang] && UI_TEXT[appLang][key]) || UI_TEXT.de[key] || key; }
@@ -1701,7 +1752,7 @@ async function updateSharedData(mutatorFn){
       let current;
       try{ current = (typeof raw === 'string') ? JSON.parse(raw) : null; }catch(e){ current = null; }
       if(!current || !current.programs || !current.programs.length){
-        current = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, wiederholungen:{}, nutzerListe:['Daniel'] };
+        current = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, wiederholungen:{}, programHidden:{}, protein:{}, proteinGoal:{}, nutzerListe:['Daniel'] };
       }
       if(!current.nutzerListe) current.nutzerListe = ['Daniel'];
       mutatorFn(current);
@@ -1755,6 +1806,9 @@ async function restoreBackup(ts){
     current.verlauf = snapshot.verlauf;
     current.gewichte = snapshot.gewichte;
     current.wiederholungen = snapshot.wiederholungen || {};
+    current.programHidden = snapshot.programHidden || {};
+    current.protein = snapshot.protein || {};
+    current.proteinGoal = snapshot.proteinGoal || {};
     current.nutzerListe = snapshot.nutzerListe;
   });
   return ok;
@@ -1984,6 +2038,9 @@ async function init(){
     if(!Array.isArray(current.programs)) current.programs = [];
     if(!current.gewichte) current.gewichte = {};
     if(!current.wiederholungen) current.wiederholungen = {};
+    if(!current.programHidden) current.programHidden = {};
+    if(!current.protein) current.protein = {};
+    if(!current.proteinGoal) current.proteinGoal = {};
     BUILTIN_PROGRAMS.forEach(({id, factory})=>{
       const existing = current.programs.find(p=>p.id===id);
       const isBroken = existing && (!Array.isArray(existing.days) || !existing.days.length);
@@ -2127,6 +2184,96 @@ function applyLanguage(){
 /* ============ Home ============ */
 const WEEKLY_GOAL = 4;
 
+/* ============ Protein tracker ============ */
+const DEFAULT_PROTEIN_GOAL = 150;
+function todayKey(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function getProteinToday(){
+  return (sharedData.protein && sharedData.protein[currentUser] && sharedData.protein[currentUser][todayKey()]) || 0;
+}
+function getProteinGoal(){
+  return (sharedData.proteinGoal && sharedData.proteinGoal[currentUser]) || DEFAULT_PROTEIN_GOAL;
+}
+async function addProtein(amount){
+  if(isNaN(amount) || amount <= 0) return;
+  await updateSharedData(current => {
+    current.protein = current.protein || {};
+    current.protein[currentUser] = current.protein[currentUser] || {};
+    const key = todayKey();
+    current.protein[currentUser][key] = (current.protein[currentUser][key] || 0) + amount;
+  });
+  renderHome();
+}
+async function resetProteinToday(){
+  if(!confirm(t('protein_reset_confirm'))) return;
+  await updateSharedData(current => {
+    current.protein = current.protein || {};
+    current.protein[currentUser] = current.protein[currentUser] || {};
+    current.protein[currentUser][todayKey()] = 0;
+  });
+  renderHome();
+}
+async function setProteinGoal(newGoal){
+  if(isNaN(newGoal) || newGoal <= 0) return;
+  await updateSharedData(current => {
+    current.proteinGoal = current.proteinGoal || {};
+    current.proteinGoal[currentUser] = Math.round(newGoal);
+  });
+  renderHome();
+}
+function renderProteinCardHtml(){
+  const total = getProteinToday();
+  const goal = getProteinGoal();
+  const pct = Math.min(100, Math.round((total/goal)*100));
+  return `<div class="protein-card">
+    <div class="protein-header">
+      <div class="protein-label">${t('protein_today_label')}</div>
+      <button class="protein-goal-btn" id="proteinGoalBtn">${t('protein_goal_label')} ${goal} g ✎</button>
+    </div>
+    <div class="protein-main">
+      <span class="protein-total count-target" data-target="${total}">0</span><span class="protein-unit">&nbsp;/ ${goal} g</span>
+    </div>
+    <div class="protein-bar-track"><div class="protein-bar-fill" style="width:${pct}%"></div></div>
+    <div class="protein-quickadd">
+      <button data-proteinadd="10">+10</button>
+      <button data-proteinadd="20">+20</button>
+      <button data-proteinadd="30">+30</button>
+      <button data-proteinadd="40">+40</button>
+      <input type="number" inputmode="numeric" id="proteinCustomInput" class="protein-custom-input" placeholder="${t('protein_custom_placeholder')}">
+      <button id="proteinCustomAddBtn" class="protein-custom-add">+</button>
+    </div>
+    ${total > 0 ? `<button class="protein-reset-link" id="proteinResetBtn">${t('protein_reset_link')}</button>` : ''}
+  </div>`;
+}
+function wireProteinCard(){
+  document.querySelectorAll('[data-proteinadd]').forEach(btn=>{
+    btn.onclick = ()=> addProtein(parseInt(btn.dataset.proteinadd, 10));
+  });
+  const customBtn = document.getElementById('proteinCustomAddBtn');
+  const customInput = document.getElementById('proteinCustomInput');
+  if(customBtn && customInput){
+    const submitCustom = ()=>{
+      const val = parseInt(customInput.value, 10);
+      if(!isNaN(val) && val > 0){ addProtein(val); }
+    };
+    customBtn.onclick = submitCustom;
+    customInput.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); submitCustom(); } });
+  }
+  const resetBtn = document.getElementById('proteinResetBtn');
+  if(resetBtn) resetBtn.onclick = resetProteinToday;
+  const goalBtn = document.getElementById('proteinGoalBtn');
+  if(goalBtn){
+    goalBtn.onclick = ()=>{
+      const input = prompt(t('protein_goal_prompt'), String(getProteinGoal()));
+      if(input === null) return;
+      const val = parseInt(input, 10);
+      if(!isNaN(val) && val > 0) setProteinGoal(val);
+    };
+  }
+}
+
 function renderHome(){
   const list = document.getElementById('homeList');
   let html = '';
@@ -2159,11 +2306,15 @@ function renderHome(){
     </div>
   </div>`;
 
+  html += renderProteinCardHtml();
+
   html += `<div class="home-question">${t('home_question')}</div>`;
 
-  sharedData.programs.forEach((rawP, idx)=>{
+  const hiddenIds = (sharedData.programHidden && sharedData.programHidden[currentUser]) || [];
+  const visiblePrograms = sharedData.programs.filter(p=>!hiddenIds.includes(p.id));
+  visiblePrograms.forEach((rawP, idx)=>{
     const p = localizeProgram(rawP);
-    const total = sharedData.programs.length;
+    const total = visiblePrograms.length;
     html += `<div class="program-card" data-program="${p.id}">
       <div class="program-reorder">
         <button class="reorder-btn" data-moveup="${p.id}" ${idx===0?'disabled':''}>▲</button>
@@ -2186,6 +2337,7 @@ function renderHome(){
   html += `<button class="reset-link" id="backupsLink">${t('backups_link')}</button>`;
   list.innerHTML = html;
   animateWeekCard();
+  wireProteinCard();
 
   document.querySelectorAll('.program-card').forEach(card=>{
     card.addEventListener('click', (e)=>{
@@ -2225,7 +2377,11 @@ function renderHome(){
       if(!confirm(t('program_delete_confirm'))) return;
       const delId = btn.dataset.delprogram;
       await updateSharedData(current => {
-        current.programs = current.programs.filter(p=>p.id !== delId);
+        current.programHidden = current.programHidden || {};
+        current.programHidden[currentUser] = current.programHidden[currentUser] || [];
+        if(!current.programHidden[currentUser].includes(delId)){
+          current.programHidden[currentUser].push(delId);
+        }
       });
       renderHome();
     });
@@ -2240,7 +2396,7 @@ function renderHome(){
   document.getElementById('exportLink').onclick = exportBackup;
   document.getElementById('resetLink').onclick = async ()=>{
     if(!confirm(t('reset_confirm'))) return;
-    sharedData = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, wiederholungen:{}, nutzerListe:['Daniel'] };
+    sharedData = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, wiederholungen:{}, programHidden:{}, protein:{}, proteinGoal:{}, nutzerListe:['Daniel'] };
     await storageSet('trainingslog_daten', sharedData, true);
     renderHome();
     showToast(t('reset_done_toast'));
