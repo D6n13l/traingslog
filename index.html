@@ -283,11 +283,6 @@
   .week-ring-wrap.complete .pulse-glow{
     background:radial-gradient(circle, #eafff2 0%, var(--glow-green) 45%, transparent 72%);
   }
-  /* After the one-time app-open animation has played, later renders (navigating
-     back to Home, etc.) show this quiet resting state instead of replaying it. */
-  .pulse-glow.no-anim{
-    animation:none; opacity:.5; transform:translate(-50%,-50%) scale(.85);
-  }
   /* grow (0-40%) and decay (60-100%) are the same length on purpose, with the
      heartbeat's lub-dub compressed into the middle 20% between them */
   @keyframes glowGrowPulse{
@@ -1180,7 +1175,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-onceanim-proteinoverview';
+const APP_BUILD = '2026-07-21-pulse-keeps-going';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {} };
@@ -2406,7 +2401,7 @@ function renderHome(){
           <circle class="week-ring-fill${pct >= 100 ? ' complete' : ''}" cx="50" cy="50" r="42" data-target-pct="${pct}"/>
         </svg>
         <div class="week-ring-orb">
-          <div class="pulse-glow${homeAnimationPlayed ? ' no-anim' : ''}"></div>
+          <div class="pulse-glow"></div>
         </div>
         <div class="week-ring-label"><span class="count-target" data-target="${stats.weekCount}">0</span>/${WEEKLY_GOAL}</div>
       </div>
@@ -2451,6 +2446,9 @@ function renderHome(){
   html += `<button class="reset-link" id="resetLink">${t('reset_link')}</button>`;
   html += `<button class="reset-link" id="backupsLink">${t('backups_link')}</button>`;
   list.innerHTML = html;
+  // Only the ring stroke-fill and count-up numbers are one-time-per-session;
+  // the pulse-glow's own heartbeat keeps looping continuously regardless (see
+  // its CSS animation), independent of this flag.
   if(!homeAnimationPlayed){
     animateWeekCard();
     homeAnimationPlayed = true;
