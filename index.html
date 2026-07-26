@@ -171,20 +171,18 @@
   /* ============ Protein tracker ============ */
   .protein-card{
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    padding:16px; margin-bottom:18px;
+    padding:12px 14px; margin-bottom:18px; cursor:pointer;
   }
+  .protein-card:active{background:var(--surface-2);}
   .protein-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
   .protein-label{font-size:13px; color:var(--text-2); font-weight:600;}
+  .protein-mini-value{font-family:'Oswald',sans-serif; font-size:14px; font-weight:700; color:var(--text);}
   .protein-goal-btn{
     background:none; border:none; color:var(--text-3); font-size:12px; padding:2px 4px; cursor:pointer;
   }
   .protein-goal-btn:active{color:var(--text-2);}
   .protein-main{
     font-family:'Oswald',sans-serif; font-weight:700; display:flex; align-items:baseline; gap:2px; margin-bottom:8px;
-    cursor:pointer;
-  }
-  .protein-info-hint{
-    margin-left:auto; color:var(--text-3); font-size:16px; font-weight:400; align-self:center;
   }
   .protein-total{font-size:30px; color:var(--text);}
   .protein-unit{font-size:15px; color:var(--text-3); font-weight:600;}
@@ -261,6 +259,8 @@
   .meal-calc-addrow{
     background:none; border:none; color:var(--accent); font-size:13px; font-weight:600; padding:4px 0 12px; cursor:pointer;
   }
+  .meal-calc-row-actions{display:flex; gap:16px;}
+  .protein-overview-divider{height:1px; background:var(--border); margin:16px 0;}
   .meal-calc-total{
     font-family:'Oswald',sans-serif; font-size:16px; font-weight:700; color:var(--text);
     border-top:1px solid var(--border); padding:12px 0; margin-bottom:12px;
@@ -989,9 +989,7 @@
 <div class="protein-overview-modal" id="proteinOverviewModal" style="display:none;">
   <div class="protein-overview-card">
     <button class="protein-overview-close" id="proteinOverviewClose">×</button>
-    <h3 class="protein-overview-title" id="proteinOverviewTitle"></h3>
-    <p class="protein-overview-sub" id="proteinOverviewSub"></p>
-    <ul class="protein-overview-list" id="proteinOverviewList"></ul>
+    <div id="proteinDetailBody"></div>
   </div>
 </div>
 
@@ -1001,7 +999,10 @@
     <h3 class="protein-overview-title" id="mealCalcTitle"></h3>
     <p class="protein-overview-sub" id="mealCalcSub"></p>
     <div class="meal-calc-rows" id="mealCalcRows"></div>
-    <button class="meal-calc-addrow" id="mealCalcAddRow"></button>
+    <div class="meal-calc-row-actions">
+      <button class="meal-calc-addrow" id="mealCalcAddRow"></button>
+      <button class="meal-calc-addrow" id="mealCalcAddCustom"></button>
+    </div>
     <div class="meal-calc-total" id="mealCalcTotal"></div>
     <button class="meal-calc-submit" id="mealCalcSubmit"></button>
   </div>
@@ -1221,10 +1222,10 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-meal-calculator';
+const APP_BUILD = '2026-07-21-compact-protein-customfood';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
-let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {} };
+let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {}, customFoods: {} };
 let workoutState = {}; // { programId: { dayId: { exId: [{weight,done}] } } }
 let currentProgramId = null;
 let currentDayId = null;
@@ -1289,6 +1290,7 @@ const UI_TEXT = {
     meal_food_egg:'Ei', meal_food_cheese:'Käse', meal_food_coldcuts:'Aufschnitt/Wurst',
     meal_food_quark:'Magerquark', meal_food_skyr:'Skyr', meal_food_yogurt:'Naturjoghurt', meal_food_milk:'Milch',
     meal_food_chicken:'Hähnchenbrust', meal_food_tuna:'Thunfisch (Dose)',
+    meal_add_custom:'+ Eigene Zutat', custom_food_name_prompt:'Name der Zutat:', custom_food_protein_prompt:'Eiweiß pro 100g (in Gramm):',
   },
   en: {
     gate_title:'Who\'s training?', gate_sub:'So history & weights are tracked correctly.',
@@ -1344,6 +1346,7 @@ const UI_TEXT = {
     meal_food_egg:'egg', meal_food_cheese:'cheese', meal_food_coldcuts:'cold cuts/sausage',
     meal_food_quark:'low-fat quark', meal_food_skyr:'Skyr', meal_food_yogurt:'plain yogurt', meal_food_milk:'milk',
     meal_food_chicken:'chicken breast', meal_food_tuna:'canned tuna',
+    meal_add_custom:'+ Custom ingredient', custom_food_name_prompt:'Ingredient name:', custom_food_protein_prompt:'Protein per 100g (in grams):',
   },
   fr: {
     gate_title:'Qui s\'entraîne ?', gate_sub:'Pour que l\'historique et les poids soient bien attribués.',
@@ -1399,6 +1402,7 @@ const UI_TEXT = {
     meal_food_egg:'œuf', meal_food_cheese:'fromage', meal_food_coldcuts:'charcuterie',
     meal_food_quark:'fromage blanc maigre', meal_food_skyr:'Skyr', meal_food_yogurt:'yaourt nature', meal_food_milk:'lait',
     meal_food_chicken:'blanc de poulet', meal_food_tuna:'thon en boîte',
+    meal_add_custom:'+ Ingrédient personnalisé', custom_food_name_prompt:'Nom de l\'ingrédient :', custom_food_protein_prompt:'Protéines pour 100g (en grammes) :',
   },
   es: {
     gate_title:'¿Quién entrena?', gate_sub:'Para asignar bien el historial y los pesos.',
@@ -1454,6 +1458,7 @@ const UI_TEXT = {
     meal_food_egg:'huevo', meal_food_cheese:'queso', meal_food_coldcuts:'fiambre/embutido',
     meal_food_quark:'requesón bajo en grasa', meal_food_skyr:'Skyr', meal_food_yogurt:'yogur natural', meal_food_milk:'leche',
     meal_food_chicken:'pechuga de pollo', meal_food_tuna:'atún en lata',
+    meal_add_custom:'+ Ingrediente propio', custom_food_name_prompt:'Nombre del ingrediente:', custom_food_protein_prompt:'Proteína por 100g (en gramos):',
   },
 };
 function t(key){ return (UI_TEXT[appLang] && UI_TEXT[appLang][key]) || UI_TEXT.de[key] || key; }
@@ -1890,7 +1895,7 @@ async function updateSharedData(mutatorFn){
       let current;
       try{ current = (typeof raw === 'string') ? JSON.parse(raw) : null; }catch(e){ current = null; }
       if(!current || !current.programs || !current.programs.length){
-        current = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, wiederholungen:{}, programHidden:{}, protein:{}, proteinGoal:{}, nutzerListe:['Daniel'] };
+        current = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, wiederholungen:{}, programHidden:{}, protein:{}, proteinGoal:{}, customFoods:{}, nutzerListe:['Daniel'] };
       }
       if(!current.nutzerListe) current.nutzerListe = ['Daniel'];
       mutatorFn(current);
@@ -1947,6 +1952,7 @@ async function restoreBackup(ts){
     current.programHidden = snapshot.programHidden || {};
     current.protein = snapshot.protein || {};
     current.proteinGoal = snapshot.proteinGoal || {};
+    current.customFoods = snapshot.customFoods || {};
     current.nutzerListe = snapshot.nutzerListe;
   });
   return ok;
@@ -2179,6 +2185,7 @@ async function init(){
     if(!current.programHidden) current.programHidden = {};
     if(!current.protein) current.protein = {};
     if(!current.proteinGoal) current.proteinGoal = {};
+    if(!current.customFoods) current.customFoods = {};
     BUILTIN_PROGRAMS.forEach(({id, factory})=>{
       const existing = current.programs.find(p=>p.id===id);
       const isBroken = existing && (!Array.isArray(existing.days) || !existing.days.length);
@@ -2353,44 +2360,24 @@ const MEAL_FOODS = [
   { key:'chicken',    protein:31,  unit:'meal_unit_100g'  },
   { key:'tuna',       protein:26,  unit:'meal_unit_100g'  },
 ];
-function openProteinOverview(){
-  const total = getProteinToday();
-  const goal = getProteinGoal();
-  const remaining = goal - total;
-  const modal = document.getElementById('proteinOverviewModal');
-  const titleEl = document.getElementById('proteinOverviewTitle');
-  const subEl = document.getElementById('proteinOverviewSub');
-  const listEl = document.getElementById('proteinOverviewList');
-
-  if(remaining <= 0){
-    titleEl.textContent = t('protein_goal_reached_title');
-    subEl.textContent = t('protein_goal_reached_sub');
-    listEl.innerHTML = '';
-  } else {
-    titleEl.textContent = t('protein_remaining_title').replace('{amount}', Math.round(remaining));
-    subEl.textContent = t('protein_remaining_sub');
-    listEl.innerHTML = PROTEIN_FOODS.map(f=>{
-      if(f.perUnit){
-        const units = Math.max(1, Math.ceil(remaining / f.perUnit));
-        const label = units === 1 ? t('protein_food_egg_singular') : t('protein_food_egg_plural');
-        return `<li>${units} ${label}</li>`;
-      }
-      const grams = Math.max(10, Math.round(remaining / f.per100g * 100 / 10) * 10);
-      return `<li>${grams} g ${t('protein_food_' + f.key)}</li>`;
-    }).join('');
-  }
-  modal.style.display = 'flex';
-}
-function closeProteinOverview(){
+function closeProteinDetail(){
   document.getElementById('proteinOverviewModal').style.display = 'none';
 }
-document.getElementById('proteinOverviewClose').onclick = closeProteinOverview;
+document.getElementById('proteinOverviewClose').onclick = closeProteinDetail;
 document.getElementById('proteinOverviewModal').addEventListener('click', (e)=>{
-  if(e.target.id === 'proteinOverviewModal') closeProteinOverview();
+  if(e.target.id === 'proteinOverviewModal') closeProteinDetail();
 });
 
 /* ============ Meal calculator ============ */
 let mealCalcRows = [];
+function getAllMealFoods(){
+  const custom = (sharedData.customFoods && sharedData.customFoods[currentUser]) || [];
+  const customFormatted = custom.map(f => ({ protein: f.per100g, unit: 'meal_unit_100g', customName: f.name }));
+  return [...MEAL_FOODS, ...customFormatted];
+}
+function mealFoodLabel(food){
+  return food.customName ? food.customName : t('meal_food_' + food.key);
+}
 function openMealCalc(){
   mealCalcRows = [
     { foodIdx: 0, qty: 1 },
@@ -2400,6 +2387,7 @@ function openMealCalc(){
   document.getElementById('mealCalcTitle').textContent = t('meal_calc_title');
   document.getElementById('mealCalcSub').textContent = t('meal_calc_sub');
   document.getElementById('mealCalcAddRow').textContent = t('meal_add_row');
+  document.getElementById('mealCalcAddCustom').textContent = t('meal_add_custom');
   document.getElementById('mealCalcSubmit').textContent = t('meal_add_to_day');
   renderMealCalcRows();
   document.getElementById('mealCalcModal').style.display = 'flex';
@@ -2408,10 +2396,11 @@ function closeMealCalc(){
   document.getElementById('mealCalcModal').style.display = 'none';
 }
 function renderMealCalcRows(){
+  const foods = getAllMealFoods();
   const wrap = document.getElementById('mealCalcRows');
   wrap.innerHTML = mealCalcRows.map((row, i)=>{
-    const options = MEAL_FOODS.map((f, fi)=>`<option value="${fi}" ${fi===row.foodIdx?'selected':''}>${t('meal_food_'+f.key)}</option>`).join('');
-    const unitLabel = t(MEAL_FOODS[row.foodIdx].unit);
+    const options = foods.map((f, fi)=>`<option value="${fi}" ${fi===row.foodIdx?'selected':''}>${mealFoodLabel(f)}</option>`).join('');
+    const unitLabel = t(foods[row.foodIdx].unit);
     return `<div class="meal-calc-row">
       <select class="meal-calc-food-select" data-rowfood="${i}">${options}</select>
       <input type="number" inputmode="decimal" class="meal-calc-qty" data-rowqty="${i}" value="${row.qty}" min="0" step="0.5">
@@ -2444,8 +2433,9 @@ function renderMealCalcRows(){
   updateMealCalcTotal();
 }
 function computeMealCalcTotal(){
+  const foods = getAllMealFoods();
   return mealCalcRows.reduce((sum, row)=>{
-    const food = MEAL_FOODS[row.foodIdx];
+    const food = foods[row.foodIdx];
     return sum + (food ? food.protein * (row.qty || 0) : 0);
   }, 0);
 }
@@ -2455,6 +2445,22 @@ function updateMealCalcTotal(){
 }
 function addMealCalcRow(){
   mealCalcRows.push({ foodIdx: 0, qty: 1 });
+  renderMealCalcRows();
+}
+async function addCustomFood(){
+  const name = prompt(t('custom_food_name_prompt'));
+  if(!name || !name.trim()) return;
+  const proteinInput = prompt(t('custom_food_protein_prompt'));
+  const protein = parseFloat(proteinInput);
+  if(isNaN(protein) || protein <= 0) return;
+  await updateSharedData(current => {
+    current.customFoods = current.customFoods || {};
+    current.customFoods[currentUser] = current.customFoods[currentUser] || [];
+    current.customFoods[currentUser].push({ name: name.trim(), per100g: protein });
+  });
+  // Select the newly added ingredient in a fresh row so it's immediately usable.
+  const foods = getAllMealFoods();
+  mealCalcRows.push({ foodIdx: foods.length - 1, qty: 1 });
   renderMealCalcRows();
 }
 async function submitMealCalc(){
@@ -2470,6 +2476,7 @@ document.getElementById('mealCalcModal').addEventListener('click', (e)=>{
   if(e.target.id === 'mealCalcModal') closeMealCalc();
 });
 document.getElementById('mealCalcAddRow').onclick = addMealCalcRow;
+document.getElementById('mealCalcAddCustom').onclick = addCustomFood;
 document.getElementById('mealCalcSubmit').onclick = submitMealCalc;
 
 function todayKey(){
@@ -2491,6 +2498,7 @@ async function addProtein(amount){
     current.protein[currentUser][key] = (current.protein[currentUser][key] || 0) + amount;
   });
   renderHome();
+  refreshProteinDetailIfOpen();
 }
 async function resetProteinToday(){
   if(!confirm(t('protein_reset_confirm'))) return;
@@ -2500,6 +2508,7 @@ async function resetProteinToday(){
     current.protein[currentUser][todayKey()] = 0;
   });
   renderHome();
+  refreshProteinDetailIfOpen();
 }
 async function setProteinGoal(newGoal){
   if(isNaN(newGoal) || newGoal <= 0) return;
@@ -2508,19 +2517,57 @@ async function setProteinGoal(newGoal){
     current.proteinGoal[currentUser] = Math.round(newGoal);
   });
   renderHome();
+  refreshProteinDetailIfOpen();
 }
 function renderProteinCardHtml(){
   const total = getProteinToday();
   const goal = getProteinGoal();
   const pct = Math.min(100, Math.round((total/goal)*100));
-  return `<div class="protein-card">
+  return `<div class="protein-card" id="proteinCardTrigger">
+    <div class="protein-header">
+      <div class="protein-label">${t('protein_today_label')}</div>
+      <div class="protein-mini-value">${total} / ${goal} g</div>
+    </div>
+    <div class="protein-bar-track"><div class="protein-bar-fill${pct>=100 ? ' full' : ''}" style="width:${pct}%"></div></div>
+  </div>`;
+}
+function wireProteinCard(){
+  const trigger = document.getElementById('proteinCardTrigger');
+  if(trigger) trigger.onclick = openProteinDetail;
+}
+
+function renderProteinDetailBodyHtml(){
+  const total = getProteinToday();
+  const goal = getProteinGoal();
+  const pct = Math.min(100, Math.round((total/goal)*100));
+  const remaining = goal - total;
+
+  let suggestionsHtml;
+  if(remaining <= 0){
+    suggestionsHtml = `<h3 class="protein-overview-title">${t('protein_goal_reached_title')}</h3>
+      <p class="protein-overview-sub">${t('protein_goal_reached_sub')}</p>`;
+  } else {
+    const items = PROTEIN_FOODS.map(f=>{
+      if(f.perUnit){
+        const units = Math.max(1, Math.ceil(remaining / f.perUnit));
+        const label = units === 1 ? t('protein_food_egg_singular') : t('protein_food_egg_plural');
+        return `<li>${units} ${label}</li>`;
+      }
+      const grams = Math.max(10, Math.round(remaining / f.per100g * 100 / 10) * 10);
+      return `<li>${grams} g ${t('protein_food_' + f.key)}</li>`;
+    }).join('');
+    suggestionsHtml = `<h3 class="protein-overview-title">${t('protein_remaining_title').replace('{amount}', Math.round(remaining))}</h3>
+      <p class="protein-overview-sub">${t('protein_remaining_sub')}</p>
+      <ul class="protein-overview-list">${items}</ul>`;
+  }
+
+  return `
     <div class="protein-header">
       <div class="protein-label">${t('protein_today_label')}</div>
       <button class="protein-goal-btn" id="proteinGoalBtn">${t('protein_goal_label')} ${goal} g ✎</button>
     </div>
-    <div class="protein-main" id="proteinOverviewTrigger">
-      <span class="protein-total count-target" data-target="${total}">0</span><span class="protein-unit">&nbsp;/ ${goal} g</span>
-      <span class="protein-info-hint">›</span>
+    <div class="protein-main">
+      <span class="protein-total">${total}</span><span class="protein-unit">&nbsp;/ ${goal} g</span>
     </div>
     <div class="protein-bar-track"><div class="protein-bar-fill${pct>=100 ? ' full' : ''}" style="width:${pct}%"></div></div>
     <div class="protein-quickadd">
@@ -2532,10 +2579,24 @@ function renderProteinCardHtml(){
       <button id="proteinCustomAddBtn" class="protein-custom-add">+</button>
     </div>
     <button class="meal-calc-open" id="mealCalcOpenBtn">${t('meal_open_btn')}</button>
+    <div class="protein-overview-divider"></div>
+    ${suggestionsHtml}
     ${total > 0 ? `<button class="protein-reset-link" id="proteinResetBtn">${t('protein_reset_link')}</button>` : ''}
-  </div>`;
+  `;
 }
-function wireProteinCard(){
+function openProteinDetail(){
+  document.getElementById('proteinDetailBody').innerHTML = renderProteinDetailBodyHtml();
+  wireProteinDetailBody();
+  document.getElementById('proteinOverviewModal').style.display = 'flex';
+}
+function refreshProteinDetailIfOpen(){
+  const modal = document.getElementById('proteinOverviewModal');
+  if(modal && modal.style.display !== 'none'){
+    document.getElementById('proteinDetailBody').innerHTML = renderProteinDetailBodyHtml();
+    wireProteinDetailBody();
+  }
+}
+function wireProteinDetailBody(){
   document.querySelectorAll('[data-proteinadd]').forEach(btn=>{
     btn.onclick = ()=> addProtein(parseInt(btn.dataset.proteinadd, 10));
   });
@@ -2560,8 +2621,6 @@ function wireProteinCard(){
       if(!isNaN(val) && val > 0) setProteinGoal(val);
     };
   }
-  const overviewTrigger = document.getElementById('proteinOverviewTrigger');
-  if(overviewTrigger) overviewTrigger.onclick = openProteinOverview;
   const mealCalcOpenBtn = document.getElementById('mealCalcOpenBtn');
   if(mealCalcOpenBtn) mealCalcOpenBtn.onclick = openMealCalc;
 }
@@ -2696,7 +2755,7 @@ function renderHome(){
   document.getElementById('exportLink').onclick = exportBackup;
   document.getElementById('resetLink').onclick = async ()=>{
     if(!confirm(t('reset_confirm'))) return;
-    sharedData = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, wiederholungen:{}, programHidden:{}, protein:{}, proteinGoal:{}, nutzerListe:['Daniel'] };
+    sharedData = { programs:BUILTIN_PROGRAMS.map(b=>b.factory()), verlauf:[], gewichte:{}, wiederholungen:{}, programHidden:{}, protein:{}, proteinGoal:{}, customFoods:{}, nutzerListe:['Daniel'] };
     await storageSet('trainingslog_daten', sharedData, true);
     renderHome();
     showToast(t('reset_done_toast'));
