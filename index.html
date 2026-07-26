@@ -294,7 +294,11 @@
 
      Layer order (bottom -> top):
        1. .week-ring-orb        glass body, unlit dark base
-       2. .pulse-glow           the diffuse light itself: grows, pulses x2, contracts
+       2. .pulse-glow           the diffuse light itself: grows, pulses x2, contracts,
+                                once per Home render (renderHome() recreates this element
+                                fresh on every app-open AND every return to Home, so a
+                                single-iteration animation naturally replays each visit
+                                without needing a JS flag)
        3. .week-ring-orb::after thin containing edge, lit from within only
   */
   :root{ --rx:#c41830; --rx-hot:#ff9c8a; }
@@ -312,7 +316,7 @@
     filter:blur(3px);
     mix-blend-mode:screen;
     opacity:.2;
-    animation: glowGrowPulse 2.3s ease-in-out infinite;
+    animation: glowGrowPulse 2.3s ease-in-out 1 forwards;
   }
   .week-ring-wrap.complete .pulse-glow{
     background:radial-gradient(circle, #eafff2 0%, var(--glow-green) 45%, transparent 72%);
@@ -1222,7 +1226,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-compact-protein-customfood';
+const APP_BUILD = '2026-07-21-waves-once-per-visit';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {}, customFoods: {} };
@@ -2687,9 +2691,11 @@ function renderHome(){
   html += `<button class="reset-link" id="resetLink">${t('reset_link')}</button>`;
   html += `<button class="reset-link" id="backupsLink">${t('backups_link')}</button>`;
   list.innerHTML = html;
-  // Only the ring stroke-fill and count-up numbers are one-time-per-session;
-  // the pulse-glow's own heartbeat keeps looping continuously regardless (see
-  // its CSS animation), independent of this flag.
+  // The ring stroke-fill and count-up numbers are one-time-per-app-session (see
+  // homeAnimationPlayed below). The pulse-glow is separate: it plays once per
+  // Home render via its own CSS animation (single iteration, see .pulse-glow),
+  // which fires again naturally each time this function recreates the element -
+  // i.e. on every return to Home, not just once per session.
   if(!homeAnimationPlayed){
     animateWeekCard();
     homeAnimationPlayed = true;
