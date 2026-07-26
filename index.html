@@ -211,6 +211,11 @@
     background:none; border:none; color:var(--text-3); font-size:12px; padding:8px 0 0; cursor:pointer;
     text-decoration:underline; text-underline-offset:2px;
   }
+  .meal-calc-open{
+    display:block; width:100%; margin-top:10px; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:10px; color:var(--text-2); font-size:13px; font-weight:600; padding:9px; cursor:pointer;
+  }
+  .meal-calc-open:active{background:var(--surface-3);}
 
   .protein-overview-modal{
     position:fixed; inset:0; background:rgba(14,15,18,.88); backdrop-filter:blur(6px); z-index:110;
@@ -237,6 +242,35 @@
   .protein-overview-list li::before{
     content:'•'; position:absolute; left:14px; color:var(--accent); font-weight:700;
   }
+
+  .meal-calc-card{max-width:360px;}
+  .meal-calc-rows{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
+  .meal-calc-row{display:flex; align-items:center; gap:8px;}
+  .meal-calc-food-select{
+    flex:1; min-width:0; background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-size:13px; padding:8px 6px;
+  }
+  .meal-calc-qty{
+    width:52px; background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-size:13px; padding:8px 4px; text-align:center;
+  }
+  .meal-calc-unit{font-size:11px; color:var(--text-3); width:44px; flex-shrink:0;}
+  .meal-calc-row-remove{
+    background:none; border:none; color:var(--text-3); font-size:18px; padding:4px 6px; cursor:pointer; flex-shrink:0;
+  }
+  .meal-calc-addrow{
+    background:none; border:none; color:var(--accent); font-size:13px; font-weight:600; padding:4px 0 12px; cursor:pointer;
+  }
+  .meal-calc-total{
+    font-family:'Oswald',sans-serif; font-size:16px; font-weight:700; color:var(--text);
+    border-top:1px solid var(--border); padding:12px 0; margin-bottom:12px;
+  }
+  .meal-calc-submit{
+    display:block; width:100%; background:var(--accent); border:none; border-radius:10px;
+    color:#fff; font-size:14px; font-weight:700; padding:12px; cursor:pointer;
+  }
+  .meal-calc-submit:active{opacity:.85;}
+
   .week-card-main{display:flex; align-items:center; gap:16px;}
   .week-ring-wrap{
     position:relative; width:84px; height:84px; flex-shrink:0;
@@ -961,6 +995,18 @@
   </div>
 </div>
 
+<div class="protein-overview-modal" id="mealCalcModal" style="display:none;">
+  <div class="protein-overview-card meal-calc-card">
+    <button class="protein-overview-close" id="mealCalcClose">×</button>
+    <h3 class="protein-overview-title" id="mealCalcTitle"></h3>
+    <p class="protein-overview-sub" id="mealCalcSub"></p>
+    <div class="meal-calc-rows" id="mealCalcRows"></div>
+    <button class="meal-calc-addrow" id="mealCalcAddRow"></button>
+    <div class="meal-calc-total" id="mealCalcTotal"></div>
+    <button class="meal-calc-submit" id="mealCalcSubmit"></button>
+  </div>
+</div>
+
 <script>
 /* ============ Default program ============ */
 function defaultProgram(){
@@ -1175,7 +1221,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-pulse-keeps-going';
+const APP_BUILD = '2026-07-21-meal-calculator';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {} };
@@ -1235,6 +1281,14 @@ const UI_TEXT = {
     protein_food_quark:'Magerquark', protein_food_skyr:'Skyr', protein_food_chicken:'Hähnchenbrust',
     protein_food_tuna:'Thunfisch (Dose)', protein_food_salami:'Salami', protein_food_brie:'Brie',
     protein_food_egg_singular:'Ei', protein_food_egg_plural:'Eier',
+    meal_calc_title:'Mahlzeit berechnen', meal_calc_sub:'Zutat und Menge wählen - die App rechnet zusammen.',
+    meal_add_row:'+ Zutat', meal_total_label:'Gesamt:', meal_add_to_day:'Zum Tageswert hinzufügen', meal_added_toast:'Zur Tagesmenge hinzugefügt ✓',
+    meal_open_btn:'Mahlzeit berechnen',
+    meal_unit_slice:'Scheibe', meal_unit_piece:'Stück', meal_unit_cup:'Becher', meal_unit_glass:'Glas', meal_unit_100g:'100 g',
+    meal_food_baguette:'Baguette', meal_food_darkbread:'Schwarzbrot', meal_food_toast:'Toastbrot', meal_food_broetchen:'Brötchen',
+    meal_food_egg:'Ei', meal_food_cheese:'Käse', meal_food_coldcuts:'Aufschnitt/Wurst',
+    meal_food_quark:'Magerquark', meal_food_skyr:'Skyr', meal_food_yogurt:'Naturjoghurt', meal_food_milk:'Milch',
+    meal_food_chicken:'Hähnchenbrust', meal_food_tuna:'Thunfisch (Dose)',
   },
   en: {
     gate_title:'Who\'s training?', gate_sub:'So history & weights are tracked correctly.',
@@ -1282,6 +1336,14 @@ const UI_TEXT = {
     protein_food_quark:'low-fat quark', protein_food_skyr:'Skyr', protein_food_chicken:'chicken breast',
     protein_food_tuna:'canned tuna', protein_food_salami:'salami', protein_food_brie:'Brie',
     protein_food_egg_singular:'egg', protein_food_egg_plural:'eggs',
+    meal_calc_title:'Calculate a meal', meal_calc_sub:'Pick food and amount - the app adds it up.',
+    meal_add_row:'+ Item', meal_total_label:'Total:', meal_add_to_day:'Add to today\'s total', meal_added_toast:'Added to today\'s total ✓',
+    meal_open_btn:'Calculate a meal',
+    meal_unit_slice:'slice', meal_unit_piece:'piece', meal_unit_cup:'cup', meal_unit_glass:'glass', meal_unit_100g:'100 g',
+    meal_food_baguette:'Baguette', meal_food_darkbread:'dark/rye bread', meal_food_toast:'toast bread', meal_food_broetchen:'bread roll',
+    meal_food_egg:'egg', meal_food_cheese:'cheese', meal_food_coldcuts:'cold cuts/sausage',
+    meal_food_quark:'low-fat quark', meal_food_skyr:'Skyr', meal_food_yogurt:'plain yogurt', meal_food_milk:'milk',
+    meal_food_chicken:'chicken breast', meal_food_tuna:'canned tuna',
   },
   fr: {
     gate_title:'Qui s\'entraîne ?', gate_sub:'Pour que l\'historique et les poids soient bien attribués.',
@@ -1329,6 +1391,14 @@ const UI_TEXT = {
     protein_food_quark:'fromage blanc maigre', protein_food_skyr:'Skyr', protein_food_chicken:'blanc de poulet',
     protein_food_tuna:'thon en boîte', protein_food_salami:'salami', protein_food_brie:'brie',
     protein_food_egg_singular:'œuf', protein_food_egg_plural:'œufs',
+    meal_calc_title:'Calculer un repas', meal_calc_sub:'Choisissez l\'aliment et la quantité - l\'appli fait le total.',
+    meal_add_row:'+ Aliment', meal_total_label:'Total :', meal_add_to_day:'Ajouter au total du jour', meal_added_toast:'Ajouté au total du jour ✓',
+    meal_open_btn:'Calculer un repas',
+    meal_unit_slice:'tranche', meal_unit_piece:'pièce', meal_unit_cup:'pot', meal_unit_glass:'verre', meal_unit_100g:'100 g',
+    meal_food_baguette:'baguette', meal_food_darkbread:'pain complet', meal_food_toast:'pain de mie', meal_food_broetchen:'petit pain',
+    meal_food_egg:'œuf', meal_food_cheese:'fromage', meal_food_coldcuts:'charcuterie',
+    meal_food_quark:'fromage blanc maigre', meal_food_skyr:'Skyr', meal_food_yogurt:'yaourt nature', meal_food_milk:'lait',
+    meal_food_chicken:'blanc de poulet', meal_food_tuna:'thon en boîte',
   },
   es: {
     gate_title:'¿Quién entrena?', gate_sub:'Para asignar bien el historial y los pesos.',
@@ -1376,6 +1446,14 @@ const UI_TEXT = {
     protein_food_quark:'requesón bajo en grasa', protein_food_skyr:'Skyr', protein_food_chicken:'pechuga de pollo',
     protein_food_tuna:'atún en lata', protein_food_salami:'salami', protein_food_brie:'brie',
     protein_food_egg_singular:'huevo', protein_food_egg_plural:'huevos',
+    meal_calc_title:'Calcular una comida', meal_calc_sub:'Elige el alimento y la cantidad - la app suma el total.',
+    meal_add_row:'+ Alimento', meal_total_label:'Total:', meal_add_to_day:'Añadir al total de hoy', meal_added_toast:'Añadido al total de hoy ✓',
+    meal_open_btn:'Calcular una comida',
+    meal_unit_slice:'rebanada', meal_unit_piece:'unidad', meal_unit_cup:'vaso', meal_unit_glass:'vaso', meal_unit_100g:'100 g',
+    meal_food_baguette:'baguette', meal_food_darkbread:'pan integral', meal_food_toast:'pan de molde', meal_food_broetchen:'panecillo',
+    meal_food_egg:'huevo', meal_food_cheese:'queso', meal_food_coldcuts:'fiambre/embutido',
+    meal_food_quark:'requesón bajo en grasa', meal_food_skyr:'Skyr', meal_food_yogurt:'yogur natural', meal_food_milk:'leche',
+    meal_food_chicken:'pechuga de pollo', meal_food_tuna:'atún en lata',
   },
 };
 function t(key){ return (UI_TEXT[appLang] && UI_TEXT[appLang][key]) || UI_TEXT.de[key] || key; }
@@ -2258,6 +2336,23 @@ const PROTEIN_FOODS = [
   { key:'brie',    per100g:20 },
   { key:'egg',     perUnit:7  },
 ];
+/* Rough average protein per typical serving - same "good enough for everyday
+   tracking, not lab-precise" spirit as PROTEIN_FOODS above. */
+const MEAL_FOODS = [
+  { key:'baguette',   protein:2.5, unit:'meal_unit_slice' },
+  { key:'darkbread',  protein:3,   unit:'meal_unit_slice' },
+  { key:'toast',      protein:1.8, unit:'meal_unit_slice' },
+  { key:'broetchen',  protein:4,   unit:'meal_unit_piece' },
+  { key:'egg',        protein:7,   unit:'meal_unit_piece' },
+  { key:'cheese',     protein:5,   unit:'meal_unit_slice' },
+  { key:'coldcuts',   protein:3,   unit:'meal_unit_slice' },
+  { key:'quark',      protein:12,  unit:'meal_unit_100g'  },
+  { key:'skyr',       protein:11,  unit:'meal_unit_100g'  },
+  { key:'yogurt',     protein:5.5, unit:'meal_unit_cup'   },
+  { key:'milk',       protein:8.5, unit:'meal_unit_glass' },
+  { key:'chicken',    protein:31,  unit:'meal_unit_100g'  },
+  { key:'tuna',       protein:26,  unit:'meal_unit_100g'  },
+];
 function openProteinOverview(){
   const total = getProteinToday();
   const goal = getProteinGoal();
@@ -2293,6 +2388,90 @@ document.getElementById('proteinOverviewClose').onclick = closeProteinOverview;
 document.getElementById('proteinOverviewModal').addEventListener('click', (e)=>{
   if(e.target.id === 'proteinOverviewModal') closeProteinOverview();
 });
+
+/* ============ Meal calculator ============ */
+let mealCalcRows = [];
+function openMealCalc(){
+  mealCalcRows = [
+    { foodIdx: 0, qty: 1 },
+    { foodIdx: 1, qty: 1 },
+    { foodIdx: 4, qty: 1 },
+  ];
+  document.getElementById('mealCalcTitle').textContent = t('meal_calc_title');
+  document.getElementById('mealCalcSub').textContent = t('meal_calc_sub');
+  document.getElementById('mealCalcAddRow').textContent = t('meal_add_row');
+  document.getElementById('mealCalcSubmit').textContent = t('meal_add_to_day');
+  renderMealCalcRows();
+  document.getElementById('mealCalcModal').style.display = 'flex';
+}
+function closeMealCalc(){
+  document.getElementById('mealCalcModal').style.display = 'none';
+}
+function renderMealCalcRows(){
+  const wrap = document.getElementById('mealCalcRows');
+  wrap.innerHTML = mealCalcRows.map((row, i)=>{
+    const options = MEAL_FOODS.map((f, fi)=>`<option value="${fi}" ${fi===row.foodIdx?'selected':''}>${t('meal_food_'+f.key)}</option>`).join('');
+    const unitLabel = t(MEAL_FOODS[row.foodIdx].unit);
+    return `<div class="meal-calc-row">
+      <select class="meal-calc-food-select" data-rowfood="${i}">${options}</select>
+      <input type="number" inputmode="decimal" class="meal-calc-qty" data-rowqty="${i}" value="${row.qty}" min="0" step="0.5">
+      <span class="meal-calc-unit">${unitLabel}</span>
+      <button class="meal-calc-row-remove" data-rowremove="${i}">×</button>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('[data-rowfood]').forEach(sel=>{
+    sel.onchange = ()=>{
+      const i = parseInt(sel.dataset.rowfood, 10);
+      mealCalcRows[i].foodIdx = parseInt(sel.value, 10);
+      renderMealCalcRows();
+    };
+  });
+  wrap.querySelectorAll('[data-rowqty]').forEach(inp=>{
+    inp.oninput = ()=>{
+      const i = parseInt(inp.dataset.rowqty, 10);
+      mealCalcRows[i].qty = parseFloat(inp.value) || 0;
+      updateMealCalcTotal();
+    };
+  });
+  wrap.querySelectorAll('[data-rowremove]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const i = parseInt(btn.dataset.rowremove, 10);
+      mealCalcRows.splice(i, 1);
+      renderMealCalcRows();
+    };
+  });
+  updateMealCalcTotal();
+}
+function computeMealCalcTotal(){
+  return mealCalcRows.reduce((sum, row)=>{
+    const food = MEAL_FOODS[row.foodIdx];
+    return sum + (food ? food.protein * (row.qty || 0) : 0);
+  }, 0);
+}
+function updateMealCalcTotal(){
+  const total = Math.round(computeMealCalcTotal() * 10) / 10;
+  document.getElementById('mealCalcTotal').textContent = `${t('meal_total_label')} ${total} g`;
+}
+function addMealCalcRow(){
+  mealCalcRows.push({ foodIdx: 0, qty: 1 });
+  renderMealCalcRows();
+}
+async function submitMealCalc(){
+  const total = Math.round(computeMealCalcTotal() * 10) / 10;
+  if(total > 0){
+    await addProtein(total);
+    showToast(t('meal_added_toast'));
+  }
+  closeMealCalc();
+}
+document.getElementById('mealCalcClose').onclick = closeMealCalc;
+document.getElementById('mealCalcModal').addEventListener('click', (e)=>{
+  if(e.target.id === 'mealCalcModal') closeMealCalc();
+});
+document.getElementById('mealCalcAddRow').onclick = addMealCalcRow;
+document.getElementById('mealCalcSubmit').onclick = submitMealCalc;
+
 function todayKey(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -2352,6 +2531,7 @@ function renderProteinCardHtml(){
       <input type="number" inputmode="numeric" id="proteinCustomInput" class="protein-custom-input" placeholder="${t('protein_custom_placeholder')}">
       <button id="proteinCustomAddBtn" class="protein-custom-add">+</button>
     </div>
+    <button class="meal-calc-open" id="mealCalcOpenBtn">${t('meal_open_btn')}</button>
     ${total > 0 ? `<button class="protein-reset-link" id="proteinResetBtn">${t('protein_reset_link')}</button>` : ''}
   </div>`;
 }
@@ -2382,6 +2562,8 @@ function wireProteinCard(){
   }
   const overviewTrigger = document.getElementById('proteinOverviewTrigger');
   if(overviewTrigger) overviewTrigger.onclick = openProteinOverview;
+  const mealCalcOpenBtn = document.getElementById('mealCalcOpenBtn');
+  if(mealCalcOpenBtn) mealCalcOpenBtn.onclick = openMealCalc;
 }
 
 function renderHome(){
