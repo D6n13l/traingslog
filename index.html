@@ -479,9 +479,12 @@
   .set-row{display:grid; grid-template-columns:22px 1fr 14px 1fr 40px; align-items:center; gap:6px; padding:7px 4px; position:relative;}
   .weight-wrap{position:relative; width:100%;}
   .pr-badge{
-    position:absolute; top:-9px; right:-4px;
-    font-family:'Oswald',sans-serif; font-size:9.5px; font-weight:700; letter-spacing:.04em;
-    color:#0E0F12; background:#E8C43B; padding:1px 6px; border-radius:999px; line-height:1.4;
+    position:absolute; top:-10px; right:-6px;
+    font-size:13px; line-height:1;
+    background:#E8C43B; color:#0E0F12;
+    width:20px; height:20px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 1px 3px rgba(0,0,0,.4);
   }
   .weight-input.pr-input{border-color:#E8C43B; box-shadow:0 0 0 1px #E8C43B;}
   .set-num{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-3); text-align:center;}
@@ -741,6 +744,17 @@
     0%,100%{ opacity:0; }
     50%{ opacity:.4; }
   }
+  /* Fullscreen photo shown briefly on top of the flash when rest time is up -
+     tap to dismiss early. The image itself is not bundled here; drop a file
+     at assets/timer-photo.jpg in the repo to enable it. If that file is
+     missing, onerror below just keeps this hidden - no broken-image icon. */
+  .timer-photo-overlay{
+    position:fixed; inset:0; z-index:160; background:#000;
+    display:none; align-items:center; justify-content:center;
+    animation:completionFadeIn .2s ease;
+  }
+  .timer-photo-overlay.show{display:flex;}
+  .timer-photo-overlay img{width:100%; height:100%; object-fit:cover;}
   .update-banner{
     position:fixed; top:calc(10px + var(--safe-t)); left:12px; right:12px; z-index:200;
     background:var(--surface-3); border:1px solid var(--accent); border-radius:999px;
@@ -988,6 +1002,9 @@
 </nav>
 
 <div class="timer-flash" id="timerFlash"></div>
+<div class="timer-photo-overlay" id="timerPhotoOverlay">
+  <img src="assets/timer-photo.jpg" alt="" onerror="window.__timerPhotoMissing = true;">
+</div>
 <div class="toast" id="toast"></div>
 
 <div class="protein-overview-modal" id="proteinOverviewModal" style="display:none;">
@@ -1226,7 +1243,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-waves-once-per-visit';
+const APP_BUILD = '2026-07-21-crown-doublereps-timerphoto';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {}, customFoods: {} };
@@ -3082,7 +3099,7 @@ function checkPr(inp, exId, opts={}){
     if(!badge){
       badge = document.createElement('span');
       badge.className = 'pr-badge';
-      badge.textContent = 'PR';
+      badge.textContent = '👑';
       wrap.appendChild(badge);
     }
     if(!row.dataset.prNotified){
@@ -3143,7 +3160,7 @@ function tickTimer(){
   timerRemaining = Math.max(0, Math.round((timerEndAt - Date.now()) / 1000));
   if(timerRemaining <= 0){
     clearInterval(timerInterval); updateTimerDisplay();
-    buzzer(); triggerTimerFlash(); setTimeout(hideTimer, 2000); return;
+    buzzer(); triggerTimerFlash(); triggerTimerPhoto(); setTimeout(hideTimer, 2000); return;
   }
   updateTimerDisplay();
 }
@@ -3154,6 +3171,18 @@ function triggerTimerFlash(){
   el.classList.add('pulse');
   setTimeout(()=>el.classList.remove('pulse'), 2000);
 }
+let timerPhotoDismissTimeout = null;
+function triggerTimerPhoto(){
+  if(window.__timerPhotoMissing) return; // no assets/timer-photo.jpg provided - skip silently
+  const overlay = document.getElementById('timerPhotoOverlay');
+  overlay.classList.add('show');
+  clearTimeout(timerPhotoDismissTimeout);
+  timerPhotoDismissTimeout = setTimeout(()=>overlay.classList.remove('show'), 2500);
+}
+document.getElementById('timerPhotoOverlay').addEventListener('click', ()=>{
+  document.getElementById('timerPhotoOverlay').classList.remove('show');
+  clearTimeout(timerPhotoDismissTimeout);
+});
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState === 'visible' && timerEndAt && document.getElementById('timerBar').classList.contains('show')){
     tickTimer(); // recalculate immediately from real elapsed time (setInterval may have been throttled/paused)
@@ -3210,19 +3239,31 @@ document.getElementById('finishBtn').addEventListener('click', ()=>{
       current.wiederholungen[currentUser] = current.wiederholungen[currentUser] || {};
       entry.exercises.forEach(e=>{
         const minR = minReps(e.target || findTargetFallback(e.id));
-        // Only sets that actually hit the minimum reps count as "achieved" -
-        // a heavy set with too few reps shouldn't get carried over as if it
-        // were a clean success.
-        const qualifying = e.sets
-          .map(s=>({ weight: toNum(s.weight), reps: toNum(s.reps) }))
-          .filter(s=> !isNaN(s.weight) && !isNaN(s.reps) && s.reps >= minR);
-        if(qualifying.length){
-          const best = qualifying.reduce((a,b)=> b.weight > a.weight ? b : a);
+        // Only a weight that was hit with the minimum reps at least TWICE
+        // counts as "achieved" - a single lucky/heavy set (possibly a partial
+        // effort right before failing) shouldn't be enough to carry over.
+        const repsByWeight = {};
+        e.sets.forEach(s=>{
+          const w = toNum(s.weight), r = toNum(s.reps);
+          if(isNaN(w) || isNaN(r)) return;
+          if(r >= minR){
+            if(!repsByWeight[w]) repsByWeight[w] = [];
+            repsByWeight[w].push(r);
+          }
+        });
+        const achievedWeights = Object.keys(repsByWeight)
+          .map(Number)
+          .filter(w => repsByWeight[w].length >= 2);
+        if(achievedWeights.length){
+          const bestWeight = Math.max(...achievedWeights);
+          // The lower of the two (or more) qualifying reps at that weight -
+          // the conservative "this is reliably what you can do", not the best.
+          const repsAtBest = Math.min(...repsByWeight[bestWeight]);
           // Reps always refresh to reflect this latest qualifying session,
           // independent of whether the weight itself is a new all-time best.
-          current.wiederholungen[currentUser][e.id] = best.reps;
+          current.wiederholungen[currentUser][e.id] = repsAtBest;
           const prevBest = current.gewichte[currentUser][e.id] || 0;
-          if(best.weight > prevBest) current.gewichte[currentUser][e.id] = best.weight;
+          if(bestWeight > prevBest) current.gewichte[currentUser][e.id] = bestWeight;
         }
       });
     });
