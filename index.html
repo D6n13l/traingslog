@@ -482,8 +482,15 @@
     position:absolute; top:-11px; right:-6px;
     width:22px; height:18px;
     background:#E8C43B;
-    clip-path: polygon(0% 100%, 0% 50%, 15% 70%, 30% 25%, 45% 60%, 50% 5%, 55% 60%, 70% 25%, 85% 70%, 100% 50%, 100% 100%);
+    clip-path: polygon(0% 100%, 0% 40%, 25% 60%, 50% 10%, 75% 60%, 100% 40%, 100% 100%);
     filter:drop-shadow(0 1px 2px rgba(0,0,0,.4));
+    animation: prBadgePop .5s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes prBadgePop{
+    0%{   transform:scale(0);    opacity:0; filter:drop-shadow(0 0 0px rgba(232,196,59,0)); }
+    55%{  transform:scale(1.35); opacity:1; filter:drop-shadow(0 0 10px rgba(232,196,59,1)); }
+    75%{  transform:scale(.92);             filter:drop-shadow(0 0 4px rgba(232,196,59,.6)); }
+    100%{ transform:scale(1);    opacity:1; filter:drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
   }
   .weight-input.pr-input{border-color:#E8C43B; box-shadow:0 0 0 1px #E8C43B;}
   .set-num{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-3); text-align:center;}
@@ -1244,7 +1251,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-crownshape-timerpersist';
+const APP_BUILD = '2026-07-21-crown-simple-pop';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {}, customFoods: {} };
