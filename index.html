@@ -479,12 +479,11 @@
   .set-row{display:grid; grid-template-columns:22px 1fr 14px 1fr 40px; align-items:center; gap:6px; padding:7px 4px; position:relative;}
   .weight-wrap{position:relative; width:100%;}
   .pr-badge{
-    position:absolute; top:-10px; right:-6px;
-    font-size:13px; line-height:1;
-    background:#E8C43B; color:#0E0F12;
-    width:20px; height:20px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:0 1px 3px rgba(0,0,0,.4);
+    position:absolute; top:-11px; right:-6px;
+    width:22px; height:18px;
+    background:#E8C43B;
+    clip-path: polygon(0% 100%, 0% 50%, 15% 70%, 30% 25%, 45% 60%, 50% 5%, 55% 60%, 70% 25%, 85% 70%, 100% 50%, 100% 100%);
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.4));
   }
   .weight-input.pr-input{border-color:#E8C43B; box-shadow:0 0 0 1px #E8C43B;}
   .set-num{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-3); text-align:center;}
@@ -737,15 +736,17 @@
   }
 
   .timer-flash{
-    position:fixed; inset:0; background:var(--accent); opacity:0; pointer-events:none; z-index:150;
+    position:fixed; inset:0; background:var(--accent); opacity:0; pointer-events:none; z-index:165;
   }
   .timer-flash.pulse{ animation: timerFlashPulse .55s ease-in-out 3; }
   @keyframes timerFlashPulse{
     0%,100%{ opacity:0; }
     50%{ opacity:.4; }
   }
-  /* Fullscreen photo shown briefly on top of the flash when rest time is up -
-     tap to dismiss early. The image itself is not bundled here; drop a file
+  /* Fullscreen photo shown briefly when rest time is up - the red flash above
+     (higher z-index, pointer-events:none) keeps pulsing visibly on top of it,
+     so both effects read together rather than the photo hiding the flash.
+     Tap to dismiss early. The image itself is not bundled here; drop a file
      at assets/timer-photo.jpg in the repo to enable it. If that file is
      missing, onerror below just keeps this hidden - no broken-image icon. */
   .timer-photo-overlay{
@@ -1243,7 +1244,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-crown-doublereps-timerphoto';
+const APP_BUILD = '2026-07-21-crownshape-timerpersist';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {}, customFoods: {} };
@@ -2226,6 +2227,7 @@ async function init(){
 
   renderHome();
   showScreen('screenHome');
+  restoreActiveTimer();
   checkForUpdate(true);
 }
 document.addEventListener('visibilitychange', ()=>{
@@ -3099,7 +3101,6 @@ function checkPr(inp, exId, opts={}){
     if(!badge){
       badge = document.createElement('span');
       badge.className = 'pr-badge';
-      badge.textContent = '👑';
       wrap.appendChild(badge);
     }
     if(!row.dataset.prNotified){
@@ -3144,6 +3145,37 @@ document.getElementById('completionFinishBtn').onclick = ()=>{
 
 /* ============ Rest timer ============ */
 let timerEndAt = null;
+// Persisted separately from timerEndAt (which is just an in-memory variable):
+// if iOS fully suspends or kills this page while the phone is locked, the
+// JS state is gone entirely, and even the visibilitychange handler below
+// never gets to run. Saving the absolute end-time to localStorage means that
+// on next launch we can tell whether a rest period silently expired while
+// locked, and still deliver the flash+photo instead of missing it entirely.
+function persistTimerState(){
+  storageSet('aktiver_timer', timerEndAt ? { endAt: timerEndAt, total: timerTotal, label: document.getElementById('timerContext').textContent } : null, false);
+}
+async function restoreActiveTimer(){
+  const stored = await storageGet('aktiver_timer', false);
+  if(!stored || !stored.endAt) return;
+  const remainingMs = stored.endAt - Date.now();
+  if(remainingMs <= 0){
+    // Expired while the app was closed/locked - deliver the notification now.
+    buzzer(); triggerTimerFlash(); triggerTimerPhoto();
+    storageSet('aktiver_timer', null, false);
+    return;
+  }
+  // Still running - resume the visible timer bar from where it left off.
+  timerEndAt = stored.endAt;
+  timerTotal = stored.total;
+  timerRemaining = Math.round(remainingMs / 1000);
+  document.getElementById('timerContext').textContent = stored.label || '';
+  document.getElementById('timerBar').classList.add('show');
+  document.getElementById('finishBar').style.display = 'none';
+  startAudioKeepAlive();
+  updateTimerDisplay();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(tickTimer, 1000);
+}
 function startTimer(seconds, label){
   clearInterval(timerInterval);
   timerTotal = seconds;
@@ -3155,12 +3187,15 @@ function startTimer(seconds, label){
   startAudioKeepAlive();
   updateTimerDisplay();
   timerInterval = setInterval(tickTimer, 1000);
+  persistTimerState();
 }
 function tickTimer(){
   timerRemaining = Math.max(0, Math.round((timerEndAt - Date.now()) / 1000));
   if(timerRemaining <= 0){
     clearInterval(timerInterval); updateTimerDisplay();
-    buzzer(); triggerTimerFlash(); triggerTimerPhoto(); setTimeout(hideTimer, 2000); return;
+    buzzer(); triggerTimerFlash(); triggerTimerPhoto(); setTimeout(hideTimer, 2000);
+    storageSet('aktiver_timer', null, false);
+    return;
   }
   updateTimerDisplay();
 }
@@ -3197,9 +3232,10 @@ function hideTimer(){
   document.getElementById('timerBar').classList.remove('show');
   document.getElementById('finishBar').style.display = 'block';
   clearInterval(timerInterval); timerEndAt = null; stopAudioKeepAlive();
+  storageSet('aktiver_timer', null, false);
 }
-document.getElementById('timerPlus').onclick = ()=>{ timerEndAt += 15000; timerRemaining += 15; timerTotal = Math.max(timerTotal, timerRemaining); updateTimerDisplay(); };
-document.getElementById('timerMinus').onclick = ()=>{ timerEndAt = Math.max(Date.now(), timerEndAt - 15000); timerRemaining = Math.max(0, timerRemaining-15); updateTimerDisplay(); };
+document.getElementById('timerPlus').onclick = ()=>{ timerEndAt += 15000; timerRemaining += 15; timerTotal = Math.max(timerTotal, timerRemaining); updateTimerDisplay(); persistTimerState(); };
+document.getElementById('timerMinus').onclick = ()=>{ timerEndAt = Math.max(Date.now(), timerEndAt - 15000); timerRemaining = Math.max(0, timerRemaining-15); updateTimerDisplay(); persistTimerState(); };
 document.getElementById('timerSkip').onclick = hideTimer;
 
 /* ============ Finish workout ============ */
