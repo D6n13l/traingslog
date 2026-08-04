@@ -4,13 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover, user-scalable=no">
 <script>
-  /* Diagnostics on this device showed innerHeight/visualViewport.height report
+  /* Diagnostics on an iOS device showed innerHeight/visualViewport.height report
      812px while window.screen.height correctly reports 874px - a real 62pt
      that iOS hides from the usual viewport APIs in this standalone PWA, even
-     though the space physically exists. So instead of innerHeight/visualViewport,
-     we source body's height from screen.height directly, forcing the app to
-     actually use the full screen. */
+     though the space physically exists. So on iOS specifically, we source
+     body's height from screen.height directly instead of innerHeight.
+
+     This must stay iOS-only: on Android, screen.height/innerHeight don't have
+     this same relationship, and forcing screen.height there made the body
+     taller than the real usable viewport, pushing the bottom nav (including
+     "Verlauf") off the bottom of the screen entirely. Every other platform
+     just falls back to body{height:var(--app-height, 100%)} using plain 100%. */
   (function(){
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if(!isIOS) return;
     function setAppHeight(){
       var h = window.screen && window.screen.height ? window.screen.height : window.innerHeight;
       document.documentElement.style.setProperty('--app-height', h + 'px');
@@ -1251,7 +1259,7 @@ function toNum(v){ return parseFloat(String(v).replace(',', '.')); }
 
 /* ============ State ============ */
 let currentUser = null;
-const APP_BUILD = '2026-07-21-crown-simple-pop';
+const APP_BUILD = '2026-07-21-ios-only-appheight';
 let appLang = localStorage.getItem('app_sprache') || 'de';
 const LOCALE_MAP = { de:'de-DE', en:'en-US', fr:'fr-FR', es:'es-ES' };
 let sharedData = { programs: [], verlauf: [], gewichte: {}, wiederholungen: {}, programHidden: {}, protein: {}, proteinGoal: {}, customFoods: {} };
